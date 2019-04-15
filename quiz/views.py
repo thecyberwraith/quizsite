@@ -1,10 +1,10 @@
-from django.shortcuts import render
+from django.views.generic import ListView
+from .models import QuizModel
 
-# Create your views here.
-
-def index(request):
+class QuizSelectPage(ListView):
 	'''
-	The homepage, which lists the available quizzes.
+	The homepage which allows a client to choose an available quiz to start.
 	'''
-	context = dict()
-	return render(request, 'quiz/index.html', context)
+	context_object_name = 'available_quizzes'
+	queryset = QuizModel.objects.filter(is_active=True)
+	template_name = 'quiz/selectquiz.html'

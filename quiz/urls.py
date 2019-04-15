@@ -5,5 +5,5 @@ from . import views
 app_name = 'quiz'
 
 urlpatterns = [
-	path('', views.index, name='index'),
+	path('', views.QuizSelectPage.as_view(), name='select'),
 ]
