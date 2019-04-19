@@ -21,3 +21,20 @@ class CategoryModel(models.Model):
 
 	class Meta:
 		ordering = ['quiz', 'name']
+
+
+class QuestionModel(models.Model):
+	value = models.PositiveIntegerField()
+	category = models.ForeignKey(
+		CategoryModel,
+		on_delete=models.CASCADE,
+		null=False,
+	)
+	question_text = models.TextField()
+	solution_text = models.TextField()
+
+	def __str__(self):
+		return '{}: {}'.format(self.category, self.value)
+
+	class Meta:
+		ordering = ['category', 'value']

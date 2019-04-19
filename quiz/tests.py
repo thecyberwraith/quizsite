@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import QuizModel, CategoryModel
+from .models import QuizModel, CategoryModel, QuestionModel
 
 class TestHomePage(TestCase):
 	def get_response(self):
@@ -82,3 +82,46 @@ class TestCategoryModel(TestCase):
 		d = CategoryModel.objects.create(name='b', quiz=quiz)
 		categories = list(CategoryModel.objects.all())
 		self.assertEqual(categories, [c,d,b,a])
+
+
+class TestQuestionModel(TestCase):
+	def setUp(self):
+		self.quiz = QuizModel.objects.create(name='A Quiz')
+		self.category = CategoryModel.objects.create(
+				name = 'A Category',
+				quiz = self.quiz
+		)
+
+	def make_question(self):
+		self.question = QuestionModel.objects.create(
+			value = 100,
+			category = self.category,
+			question_text = 'Who are you?',
+			solution_text = 'Nobody.'
+		)
+	def test_construction_of_regular_object(self):
+		self.make_question()
+
+	def test_quiz_cascading_delete(self):
+		self.make_question()
+		self.assertEqual(len(QuestionModel.objects.all()), 1)
+		self.quiz.delete()
+		self.assertEqual(len(QuestionModel.objects.all()), 0)
+
+	def test_category_cascading_delete(self):
+		self.make_question()
+		self.assertEqual(len(QuestionModel.objects.all()), 1)
+		self.category.delete()
+		self.assertEqual(len(QuestionModel.objects.all()), 0)
+
+	def test_str_method(self):
+		self.make_question()
+		self.assertEqual(str(self.question), 'A Quiz - A Category: 100')
+
+	def test_sort_order(self):
+		self.make_question()
+		cb = CategoryModel.objects.create(name='CB', quiz=self.quiz)
+		qb = QuestionModel.objects.create(value=50, category=cb)
+		qc = QuestionModel.objects.create(value=101, category=self.category)
+		questions = list(QuestionModel.objects.all())
+		self.assertEqual(questions, [self.question, qc, qb])
