@@ -10,3 +10,14 @@ class QuizModel(models.Model):
 	class Meta:
 		ordering = ['name']
 		verbose_name_plural = 'quizzes'
+
+
+class CategoryModel(models.Model):
+	name = models.CharField(max_length=100)
+	quiz = models.ForeignKey(QuizModel, on_delete=models.CASCADE, null=False)
+
+	def __str__(self):
+		return '{} - {}'.format(self.quiz.name, self.name)
+
+	class Meta:
+		ordering = ['quiz', 'name']
