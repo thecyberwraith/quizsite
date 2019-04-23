@@ -1,9 +1,19 @@
-<html>
-<body>
-{% if available_quizzes %}
+{% extends "quiz/base.html" %}
+{% block title %}Quiz Site{% endblock %}
+{% block content %}
+
+{% for quiz in available_quizzes %}
 	Select an available quiz below.
-{% else %}
+
+	<table>
+		<tr><th>Quiz Name</th><th></th></tr>
+		<tr>
+			<td>{{ quiz.name }}</td>
+			<td><a href="">Start</a></td>
+		</tr>
+	</table>
+{% empty %}
 	No quizzes are available.
-{% endif %}
-</body>
-</html>
+{% endfor %}
+
+{% endblock %}

@@ -28,6 +28,11 @@ class TestHomePage(TestCase):
 		response = self.get_response()
 		self.assertEqual(list(response.context['available_quizzes']), [q,])
 
+	def test_available_quiz_table_row(self):
+		q = QuizModel.objects.create(name='A Quiz')
+		response = self.get_response()
+		self.assertContains(response, 'A Quiz')
+
 
 class TestQuizModel(TestCase):
 	def test_construction_of_regular_one(self):
