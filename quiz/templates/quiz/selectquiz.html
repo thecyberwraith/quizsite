@@ -9,7 +9,7 @@
 		<tr><th>Quiz Name</th><th></th></tr>
 		<tr>
 			<td>{{ quiz.name }}</td>
-			<td><a href="">Start</a></td>
+			<td><a href="{% url 'quiz:quiz' quiz.id %}">Start</a></td>
 		</tr>
 	</table>
 {% empty %}

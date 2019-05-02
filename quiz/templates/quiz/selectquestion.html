@@ -1,0 +1,21 @@
+{% block title %}{{ quiz.name }}{% endblock %}
+{% block content %}
+	<table>
+		<tr>
+			{% for category in categories %}
+				<th>{{ category.name }}</th>
+			{% endfor %}
+		</tr>
+		{% for question_row in questions %}
+			<tr>
+				{% for question in question_row %}
+					<td>
+					{% if question %}
+						{{ question.value }}
+					{% endif %}
+					</td>
+				{% endfor %}
+			</tr>
+		{% endfor %}
+	</table>
+{% endblock %}

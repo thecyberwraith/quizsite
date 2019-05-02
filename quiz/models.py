@@ -14,7 +14,11 @@ class QuizModel(models.Model):
 
 class CategoryModel(models.Model):
 	name = models.CharField(max_length=100)
-	quiz = models.ForeignKey(QuizModel, on_delete=models.CASCADE, null=False)
+	quiz = models.ForeignKey(
+		QuizModel,
+		on_delete=models.CASCADE,
+		null=False,
+		related_name='categories')
 
 	def __str__(self):
 		return '{} - {}'.format(self.quiz.name, self.name)
@@ -29,6 +33,7 @@ class QuestionModel(models.Model):
 		CategoryModel,
 		on_delete=models.CASCADE,
 		null=False,
+		related_name='questions'
 	)
 	question_text = models.TextField()
 	solution_text = models.TextField()

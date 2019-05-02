@@ -34,6 +34,81 @@ class TestHomePage(TestCase):
 		self.assertContains(response, 'A Quiz')
 
 
+class TestQuizPage(TestCase):
+	def setUp(self):
+		self.quiz = QuizModel.objects.create(name='A Quiz')
+		self.catA = CategoryModel.objects.create(
+				name = 'First Cat',
+				quiz = self.quiz,
+				)
+		self.catB = CategoryModel.objects.create(
+				name = 'Actually First',
+				quiz = self.quiz,
+				)
+		self.questA1 = QuestionModel.objects.create(
+				value = 100,
+				question_text = 'A question',
+				solution_text = 'A solution',
+				category = self.catA,
+				)
+		self.questA2 = QuestionModel.objects.create(
+				value = 200,
+				question_text = 'An question',
+				solution_text = 'A solution',
+				category = self.catA,
+				)
+		self.questB1 = QuestionModel.objects.create(
+				value = 150,
+				question_text = 'B question',
+				solution_text = 'B solution',
+				category = self.catB,
+				)
+		self.response = self.client.get(
+			reverse(
+				'quiz:quiz',
+				kwargs = {'pk': self.quiz.id}
+				)
+			)
+
+	def test_page_reachable(self):
+		self.assertEqual(self.response.status_code, 200)
+	
+	def test_page_has_quiz_context(self):
+		self.assertEqual(self.response.context['quiz'], self.quiz)
+	
+	def test_page_has_categories(self):
+		self.assertEqual(
+			list(self.response.context['categories']), 
+			[self.catB, self.catA]
+			)
+	
+	def test_page_has_uneven_question_lists(self):
+		self.assertEqual(
+			self.response.context['questions'],
+			(
+				(self.questB1, self.questA1),
+				(None, self.questA2)
+			)
+			)
+	
+	def test_category_names_appear(self):
+		self.assertContains(
+			self.response,
+			'First Cat'
+			)
+		self.assertContains(
+			self.response,
+			'Actually First'
+			)
+	
+	def test_values_appear(self):
+		for value in [100,150,200]:
+			self.assertContains(
+				self.response,
+				str(value)
+				)
+
+
 class TestQuizModel(TestCase):
 	def test_construction_of_regular_one(self):
 		QuizModel.objects.create(name='A Boring Quiz')
