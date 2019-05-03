@@ -3,7 +3,7 @@ import django.views.generic as generic
 import itertools
 import logging
 
-from .models import QuizModel
+from .models import QuizModel, QuestionModel
 
 class QuizSelectPage(generic.ListView):
 	'''
@@ -29,4 +29,15 @@ class QuizPage(generic.DetailView):
 		context['categories'] = categories
 		context['questions'] = evened_questions
 
+		return context
+
+
+class QuestionPage(generic.DetailView):
+	model = QuestionModel
+	context_object_name = 'question'
+	template_name = 'quiz/questiondetail.html'
+	
+	def get_context_data(self, **kwargs):
+		context = super(QuestionPage, self).get_context_data(**kwargs)
+		context['question_string'] = str(context['question'])
 		return context

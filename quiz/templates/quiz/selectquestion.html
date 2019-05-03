@@ -1,3 +1,4 @@
+{% extends "quiz/base.html" %}
 {% block title %}{{ quiz.name }}{% endblock %}
 {% block content %}
 	<table>
@@ -11,7 +12,9 @@
 				{% for question in question_row %}
 					<td>
 					{% if question %}
-						{{ question.value }}
+						<a href="{% url 'quiz:question' question.id %}">
+							{{ question.value }}
+						</a>
 					{% endif %}
 					</td>
 				{% endfor %}

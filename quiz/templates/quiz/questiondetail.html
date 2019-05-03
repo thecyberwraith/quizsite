@@ -1,0 +1,22 @@
+{% extends "quiz/base.html" %}
+{% block title %}{{ question_string }}{% endblock %}
+{% block content %}
+	<div>
+		{{ question.question_text }}
+	</div>
+	<div>
+		{{ question.solution_text }}
+	</div>
+	<div>
+		<div>
+			<a href="{% url 'quiz:quiz' question.category.quiz.id %}">
+				Return
+			</a>
+			<a>Show Answer</a>
+		</div>
+		<div>
+			<a>Correct</a>
+			<a>Incorrect</a>
+		</div>
+	</div>
+{% endblock %}

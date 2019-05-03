@@ -109,6 +109,39 @@ class TestQuizPage(TestCase):
 				)
 
 
+class TestQuestionPage(TestCase):
+	def setUp(self):
+		self.quiz = QuizModel.objects.create(name='A Quiz')
+		self.category = CategoryModel.objects.create(
+				name = 'Category',
+				quiz = self.quiz,
+				)
+		self.question = QuestionModel.objects.create(
+				value = 100,
+				question_text = 'Here is a question',
+				solution_text = 'Here is my solution',
+				category = self.category,
+				)
+		self.response = self.client.get(
+			reverse(
+				'quiz:question',
+				kwargs = {'pk': self.question.id},
+				)
+			)
+
+	def test_200_result(self):
+		self.assertEqual(self.response.status_code, 200)
+	
+	def test_page_has_text(self):
+		text_samples = [
+			'Here is a question',
+			'Here is my solution',
+			str(self.question), # In the title
+		]
+		for text in text_samples:
+			self.assertContains(self.response, text)
+
+
 class TestQuizModel(TestCase):
 	def test_construction_of_regular_one(self):
 		QuizModel.objects.create(name='A Boring Quiz')
