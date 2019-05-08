@@ -1,4 +1,6 @@
+from django.shortcuts import redirect
 import django.views.generic as generic
+from django.urls import reverse
 
 import itertools
 import logging
@@ -41,3 +43,26 @@ class QuestionPage(generic.DetailView):
 		context = super(QuestionPage, self).get_context_data(**kwargs)
 		context['question_string'] = str(context['question'])
 		return context
+
+
+class QuizStartRedirect(generic.View):
+	def get(self, request, pk):
+		request.session['quiz'] = pk
+		request.session['answered'] = []
+		request.session['score'] = 0
+		return redirect(reverse('quiz:quiz', kwargs={'pk': pk}))
+
+
+class QuizAnswerQuestionRedirect(generic.View):
+	def get(self, request, pk, correct):
+		print(pk)
+		question = QuestionModel.objects.get(pk=pk)
+		if pk not in request.session['answered']:
+			request.session['answered'].append(pk)
+			if correct == 1:
+				request.session['score'] += question.value
+			request.session.modified=True
+		print(request.session['answered'])
+		return redirect(
+			reverse('quiz:quiz', kwargs={'pk': question.category.quiz.id})
+			)

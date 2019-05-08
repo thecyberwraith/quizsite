@@ -1,8 +1,36 @@
 <html>
 	<head>
 		<title>{% block title %}Quiz Site{% endblock %}</title>
+		<style>
+			body{
+				background-color: #0000FF;
+				color: white;
+				font-size: 3em;
+			}
+			a:link{
+				color: white;
+				text-decoration: none;
+			}
+			a:visited{
+				color: white;
+				text-decoration: none;
+			}
+			a:hover{
+				color: gray;
+				text-decoration: none;
+			}
+			a:active{
+				color: gray;
+				text-decoration: none;
+			}
+		</style>
+		{% block special_style %}{% endblock %}
+		{% block special_script %}{% endblock %}
 	</head>
 	<body>
+		<header>
+			<h1><a href="{% url "quiz:select" %}">Quiz Site</a></h1>
+		</header>
 		{% block content %}Sample{% endblock %}
 	</body>
 </html>

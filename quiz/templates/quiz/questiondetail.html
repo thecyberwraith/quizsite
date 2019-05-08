@@ -1,22 +1,47 @@
 {% extends "quiz/base.html" %}
 {% block title %}{{ question_string }}{% endblock %}
+{% block special_style %}
+	<style>
+		a {
+			flex-grow: 1;
+			text-align: center;
+		}
+		.commandlink {
+			margin: auto;
+		}
+	</style>
+{% endblock %}
+{% block special_script %}
+	<script type="text/javascript">
+		function show_answer() {
+			document.getElementById("question_box").style.display = "none";
+			document.getElementById("answer_box").style.display = "block";
+			return false;
+		}
+		window.onload = function() {
+			document.getElementById("show_answer_link").onclick = show_answer
+		}
+	</script>
+{% endblock %}
 {% block content %}
-	<div>
-		{{ question.question_text }}
-	</div>
-	<div>
-		{{ question.solution_text }}
-	</div>
-	<div>
-		<div>
-			<a href="{% url 'quiz:quiz' question.category.quiz.id %}">
-				Return
-			</a>
-			<a>Show Answer</a>
+	<p> For {{ question.value }} points, </p>
+	<div id="question_box" width=100%>
+		<p>
+			{{ question.question_text }}
+		</p>
+
+		<div style="display: flex;">
+			<a href="{% url 'quiz:quiz' question.category.quiz.id %}">Return</a>
+			<a id="show_answer_link" href="Show Answer">Show Answer</a>
 		</div>
-		<div>
-			<a>Correct</a>
-			<a>Incorrect</a>
+	</div>
+	<div id="answer_box", style="display:none;">
+		<p>
+			{{ question.solution_text }}
+		</p>
+		<div style="display: flex;">
+		<a href="{% url 'quiz:answer' question.id 1 %}">Correct</a>
+		<a href="{% url 'quiz:answer' question.id 0 %}">Incorrect</a>
 		</div>
 	</div>
 {% endblock %}

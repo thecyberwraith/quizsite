@@ -3,6 +3,80 @@ from django.urls import reverse
 
 from .models import QuizModel, CategoryModel, QuestionModel
 
+class TestAnswerQuestionPage(TestCase):
+	def setUp(self):
+		quiz = QuizModel.objects.create(name='A quiz')
+		category = CategoryModel.objects.create(name='A Cat', quiz=quiz)
+		self.question = QuestionModel.objects.create(
+			category = category,
+			question_text = 'Q',
+			solution_text = 'A',
+			value = 143
+			)
+		self.client.get(
+			reverse('quiz:start', kwargs={'pk': quiz.id})
+			)
+	
+	def get_response(self, correct=0, follow=False):
+		return self.client.get(
+			reverse(
+				'quiz:answer',
+				kwargs={'pk': self.question.id, 'correct':correct},
+				),
+			follow = follow,
+			)
+	
+	def test_redirect(self):
+		response = self.get_response()
+		self.assertRedirects(
+			response,
+			reverse('quiz:quiz', kwargs={'pk': self.question.category.quiz.id}),
+			status_code = 302,
+			target_status_code = 200,
+			)
+	
+	def test_correct_answer(self):
+		self.get_response(
+			correct=1,
+			follow=True
+			)
+		self.assertEqual(self.client.session.get('score'), self.question.value)
+		self.assertIn(self.question.id, self.client.session.get('answered'))
+	
+	def test_incorrect_answer(self):
+		self.get_response(
+			correct=0,
+			follow=True
+			)
+		self.assertEqual(self.client.session.get('score'), 0)
+		self.assertIn(self.question.id, self.client.session.get('answered'))
+	
+	def test_no_doubling(self):
+		self.get_response(correct=1, follow=True)
+		self.get_response(correct=1, follow=True)
+		self.assertEqual(self.client.session.get('score'), self.question.value)
+		self.assertEqual(self.client.session.get('answered'), [self.question.id])
+
+
+class TestStartPage(TestCase):
+	def setUp(self):
+		self.quiz = QuizModel.objects.create(name='A Quiz')
+		self.response = self.client.get(reverse('quiz:start', kwargs={'pk': self.quiz.id}))
+	
+	def test_redirection_status(self):
+		self.assertRedirects(
+			self.response,
+			reverse('quiz:quiz', kwargs={'pk': self.quiz.id}),
+			status_code=302,
+			target_status_code=200,
+			)
+
+	def test_session_initialization(self):
+		self.assertEqual(self.client.session['quiz'], self.quiz.id)
+		self.assertEqual(self.client.session['answered'], [])
+		self.assertEqual(self.client.session['score'], 0)
+
+
 class TestHomePage(TestCase):
 	def get_response(self):
 		return self.client.get(reverse('quiz:select'))
@@ -65,9 +139,10 @@ class TestQuizPage(TestCase):
 				)
 		self.response = self.client.get(
 			reverse(
-				'quiz:quiz',
+				'quiz:start',
 				kwargs = {'pk': self.quiz.id}
-				)
+				),
+			follow=True
 			)
 
 	def test_page_reachable(self):
@@ -122,6 +197,12 @@ class TestQuestionPage(TestCase):
 				solution_text = 'Here is my solution',
 				category = self.category,
 				)
+		self.client.get(
+			reverse(
+				'quiz:start',
+				kwargs = {'pk': self.quiz.id}
+				)
+			)
 		self.response = self.client.get(
 			reverse(
 				'quiz:question',

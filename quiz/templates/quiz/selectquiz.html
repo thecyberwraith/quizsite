@@ -2,16 +2,19 @@
 {% block title %}Quiz Site{% endblock %}
 {% block content %}
 
-{% for quiz in available_quizzes %}
-	Select an available quiz below.
+<p>Select an available quiz below.</p>
 
-	<table>
-		<tr><th>Quiz Name</th><th></th></tr>
-		<tr>
-			<td>{{ quiz.name }}</td>
-			<td><a href="{% url 'quiz:quiz' quiz.id %}">Start</a></td>
-		</tr>
-	</table>
+{% for quiz in available_quizzes %}
+	<p>
+		{{ quiz.name }}
+		[<a href="{% url 'quiz:start' quiz.id %}">
+			{% if request.session.quiz == quiz.id %}
+				Restart
+			{% else %}
+				Start
+			{% endif %}
+		</a>]
+	</p>
 {% empty %}
 	No quizzes are available.
 {% endfor %}
