@@ -55,14 +55,12 @@ class QuizStartRedirect(generic.View):
 
 class QuizAnswerQuestionRedirect(generic.View):
 	def get(self, request, pk, correct):
-		print(pk)
 		question = QuestionModel.objects.get(pk=pk)
 		if pk not in request.session['answered']:
 			request.session['answered'].append(pk)
 			if correct == 1:
 				request.session['score'] += question.value
 			request.session.modified=True
-		print(request.session['answered'])
 		return redirect(
 			reverse('quiz:quiz', kwargs={'pk': question.category.quiz.id})
 			)
