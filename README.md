@@ -6,8 +6,8 @@ This is intended to be a little site that teachers can use to present Jeopardy s
 
 This version of QuizSite is build on Python3.5 with the Django library. To get this running, you should:
 
-1) Create a virtualenv utilizing Python3.5. The following commands are assumed to be within the virtualenv (source the ./bin/activate file)
-2) Clone this repository
+1) Clone this repository
+2) In VSCode, open using a remote container (specified in .devcontainer)
 3) Run `pip install -r requirements.txt`
 4) Run `python manage.py makemigration && python manage.py migrate`
 5) Boot up the server by running `python3 manage.py runserver`
