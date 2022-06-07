@@ -10,23 +10,28 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
-import os
+from pathlib import Path
+from configuration import generate_config
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).absolute().parent
 
-
+CONFIG = generate_config(BASE_DIR)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'chdt*1588zi!(0l(_@7r60ld=ka541x-oj9*$+g6vn)b-%@*-_'
+SECRET_KEY = CONFIG['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = CONFIG['DEBUG']
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = CONFIG['HOSTS']
 
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = not DEBUG
 
 # Application definition
 
@@ -52,7 +57,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'quizsite.urls'
 
-PROJECT_ROOT = os.path.realpath(os.path.join(os.path.dirname(__file__), os.pardir))
+PROJECT_ROOT = BASE_DIR
 
 TEMPLATES = [
     {
@@ -81,12 +86,7 @@ WSGI_APPLICATION = 'quizsite.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
+DATABASES = CONFIG['DATABASES']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
