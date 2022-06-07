@@ -1,2 +1,3 @@
-Admin Username: teacher
-Teacher Password: teacher
+# Superuser
+* Admin Username: teacher
+* Teacher Password: teacher
