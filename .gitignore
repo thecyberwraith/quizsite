@@ -1,5 +1,4 @@
 __pycache__/
 *.sqlite3
 quiz/migrations/
-venv
-configuration/production.py
+django/configuration/production.py
