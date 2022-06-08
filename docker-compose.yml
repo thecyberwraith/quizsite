@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: deploy/django.dockerfile
+    ports:
+      - 8000:8000
+  
+  nginx:
+    build:
+      context: .
+      dockerfile: deploy/nginx.dockerfile
+    ports:
+      - 8080:8080

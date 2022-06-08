@@ -21,7 +21,9 @@ def generate_config(base_dir: Path) -> ChainMap:
         print('Production configuration loaded.')
     except ImportError:
         print('No production configuration detected')
-        def generate_prod_config(x): return {}
+
+        def generate_prod_config(_):
+            return {}
         prod_config = False
 
     return ChainMap(

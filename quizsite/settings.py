@@ -12,11 +12,11 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 from pathlib import Path
 from configuration import generate_config
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = Path(__file__).absolute().parent
+BASE_DIR = Path(__file__).parent.parent
 
 CONFIG = generate_config(BASE_DIR)
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
@@ -36,7 +36,7 @@ SECURE_SSL_REDIRECT = not DEBUG
 # Application definition
 
 INSTALLED_APPS = [
-	'quiz.apps.QuizConfig',
+    'quiz.apps.QuizConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -76,8 +76,8 @@ TEMPLATES = [
 ]
 
 TEMPLATE_LOADERS = (
-	'django.template.loaders.filesystem.Loader',
-	'django.template.loaders.app_directories.Loader',
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
 )
 
 WSGI_APPLICATION = 'quizsite.wsgi.application'
@@ -87,7 +87,6 @@ WSGI_APPLICATION = 'quizsite.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = CONFIG['DATABASES']
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Password validation
@@ -127,3 +126,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR.parent / 'static'
