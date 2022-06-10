@@ -1,4 +1,5 @@
 __pycache__/
 *.sqlite3
 quiz/migrations/
-django/configuration/production.py
+certs/
+.env

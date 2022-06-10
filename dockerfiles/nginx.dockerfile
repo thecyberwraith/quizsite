@@ -8,9 +8,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./django/ .
 
-RUN python manage.py collectstatic --no-input
+RUN HOSTNAME=unused DEBUG=unused SECRET=unused python manage.py collectstatic --no-input
 
 FROM nginx
 
 COPY --from=staticsrc /usr/app/src/static /usr/share/nginx/html/static
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY ./nginx.conf /etc/nginx/templates/default.conf.template
+COPY ./certs /etc/nginx/certs

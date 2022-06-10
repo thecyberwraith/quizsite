@@ -5,10 +5,16 @@ services:
     build:
       context: ./django
       dockerfile: django.dockerfile
+    environment:
+      - SECRET=$SECRET
+      - DEBUG=$DEBUG
+      - HOSTNAME=$HOSTNAME
   
   nginx:
     build:
       context: .
       dockerfile: dockerfiles/nginx.dockerfile
+    environment:
+      - HOSTNAME=$HOSTNAME
     ports:
-      - 8080:8080
+      - 8080:443

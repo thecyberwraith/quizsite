@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 from pathlib import Path
 from configuration import generate_config
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+
 BASE_DIR = Path(__file__).parent.parent
 
 CONFIG = generate_config(BASE_DIR)
@@ -26,8 +26,10 @@ SECRET_KEY = CONFIG['SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = CONFIG['DEBUG']
 
-ALLOWED_HOSTS = CONFIG['HOSTS']
+ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = [f'https://{CONFIG["HOSTNAME"]}:8080']
+print('Trusted host names', CSRF_TRUSTED_ORIGINS)
 CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -86,7 +88,13 @@ WSGI_APPLICATION = 'quizsite.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-DATABASES = CONFIG['DATABASES']
+DATABASES =  {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Password validation

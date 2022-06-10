@@ -12,4 +12,6 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 COPY . .
 
+RUN HOSTNAME=unused DEBUG=no SECRET=unused python manage.py makemigrations && HOSTNAME=unused DEBUG=no SECRET=unused python manage.py migrate
+
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
