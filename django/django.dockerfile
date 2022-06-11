@@ -14,4 +14,4 @@ COPY . .
 
 RUN HOSTNAME=unused DEBUG=no SECRET=unused python manage.py makemigrations && HOSTNAME=unused DEBUG=no SECRET=unused python manage.py migrate
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "quizsite.asgi:application"]

@@ -29,16 +29,18 @@ DEBUG = CONFIG['DEBUG']
 ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [f'https://{CONFIG["HOSTNAME"]}:8080']
-print('Trusted host names', CSRF_TRUSTED_ORIGINS)
+
 CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = not DEBUG
 
+ASGI_APPLICATION = "quizsite.asgi.application"
 # Application definition
 
 INSTALLED_APPS = [
     'quiz.apps.QuizConfig',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
