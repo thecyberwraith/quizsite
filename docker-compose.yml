@@ -15,6 +15,9 @@ services:
     build:
       context: .
       dockerfile: dockerfiles/nginx.dockerfile
+    volumes:
+      - $CERT_FILE:/etc/nginx/certs/fullchain.pem
+      - $CERT_KEY:/etc/nginx/certs/privkey.pem
     environment:
       - HOSTNAME=$HOSTNAME
     ports:

@@ -14,4 +14,3 @@ FROM nginx
 
 COPY --from=staticsrc /usr/app/src/static /usr/share/nginx/html/static
 COPY ./nginx.conf /etc/nginx/templates/default.conf.template
-COPY ./certs /etc/nginx/certs
