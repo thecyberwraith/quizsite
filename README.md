@@ -36,6 +36,7 @@ If you have Docker installed, then you can depoly this project with it. First, y
     * HOSTNAME - The hostname that the service should respond to (should match your certificates)
     * DEBUG - Whether to use debug services in Django.
     * SECRET - The secret key to use for encryption for Django.
+    * DATABASE_FILE - Since I use a simple sqlite3 database, persist data by mounting the file from your system into the application! If you don't have the file already, one is generated in the image. NOTE - you may need to manually make migrations on externally persisted database files.
 
 Afterwards, run `docker compose build --pull && docker compose up` to boot up the service. It defaults to port `8080` on the machine. If you want to utilize this service with a self signed certificate, run the command 
 

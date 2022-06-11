@@ -9,7 +9,8 @@ services:
       - SECRET=$SECRET
       - DEBUG=$DEBUG
       - HOSTNAME=$HOSTNAME
-  
+    volumes:
+      - $DATABASE_FILE:/usr/app/src/db.sqlite3
   nginx:
     build:
       context: .
