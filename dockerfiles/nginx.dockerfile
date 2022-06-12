@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./django/ .
 
-RUN HOSTNAME=unused DEBUG=unused SECRET=unused python manage.py collectstatic --no-input
+RUN python manage.py collectstatic --no-input
 
 FROM nginx
 

@@ -17,6 +17,25 @@ BASE_DIR = Path(__file__).parent.parent
 
 CONFIG = generate_config(BASE_DIR)
 
+LOG_LEVEL = 'INFO'
+
+if CONFIG['DEBUG']:
+    LOG_LEVEL = 'DEBUG'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
@@ -28,7 +47,7 @@ DEBUG = CONFIG['DEBUG']
 
 ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = [f'https://{CONFIG["HOSTNAME"]}:8080']
+CSRF_TRUSTED_ORIGINS = [f'https://{CONFIG["SERVER_HOST_NAME"]}:8080']
 
 CSRF_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG

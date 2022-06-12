@@ -1,0 +1,31 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Server",
+            "type": "shell",
+            "command": "cd ./django && python manage.py runserver",
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Tests",
+            "type": "shell",
+            "command": "cd ./django && python manage.py test",
+            "problemMatcher": []
+        },
+        {
+            "label": "Update database",
+            "type": "shell",
+            "command": "cd ./django && python manage.py makemigrations && python manage.py migrate",
+            "problemMatcher": []
+        },
+        {
+            "label": "Setup Database",
+            "type": "shell",
+            "command": "cd ./django && rm -f db.sqlite3 && python manage.py makemigrations && python manage.py migrate && python manage.py createsuperuser",
+            "problemMatcher": []
+        },
+    ],
+}

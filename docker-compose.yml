@@ -8,7 +8,7 @@ services:
     environment:
       - SECRET=$SECRET
       - DEBUG=$DEBUG
-      - HOSTNAME=$HOSTNAME
+      - SERVER_HOST_NAME=$SERVER_HOST_NAME
     volumes:
       - $DATABASE_FILE:/usr/app/src/db.sqlite3
   nginx:
@@ -19,6 +19,6 @@ services:
       - $CERT_FILE:/etc/nginx/certs/fullchain.pem
       - $CERT_KEY:/etc/nginx/certs/privkey.pem
     environment:
-      - HOSTNAME=$HOSTNAME
+      - SERVER_HOST_NAME=$SERVER_HOST_NAME
     ports:
       - 8080:443

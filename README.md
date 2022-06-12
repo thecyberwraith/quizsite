@@ -4,12 +4,12 @@ This is intended to be a little site that teachers can use to present Jeopardy s
 
 ## Development Setup
 
-This version of QuizSite is build on Python3.10 with the Django library. To get this running, you should:
+This version of QuizSite is build on Python3.10 with the Django library. We are integrated with VSCode. To get this running, you should:
 
 1) Clone this repository
-2) In VSCode, open using a remote container (specified in .devcontainer)
-3) Run `python manage.py makemigrations && python manage.py migrate`
-4) Boot up the development server by running `python manage.py runserver`
+2) In VSCode, open using a remote container (needs the VSCode Remote Containers plugin)
+3) Run the task `Setup Database`. This prompts you to create a super user AND WILL DELETE ANY PREVIOUS DATABASE.
+4) Boot up the development server by running task `Run Server`
 
 Note that, out of the box, the Docker commands will not work in the development container. However, if you want to just run this on your own laptop, this should work well enough.
 
@@ -32,8 +32,8 @@ By swapping out the `db.sqlite3` file, you can instantly use quizzes that others
 If you have Docker installed, then you can depoly this project with it. First, you need the following configurations set.
 
 * In the root directory, create a file name `.env` which holds the following variables:
-    * HOSTNAME - The hostname that the service should respond to (should match your certificates)
-    * DEBUG - Whether to use debug services in Django.
+    * SERVER_HOST_NAME - The hostname that the service should respond to (should match your certificates)
+    * DEBUG - Whether to use debug services in Django and set log level to DEBUG.
     * SECRET - The secret key to use for encryption for Django.
     * DATABASE_FILE - Since I use a simple sqlite3 database, persist data by mounting the file from your system into the application! If you don't have the file already, one is generated in the image. NOTE - you may need to manually make migrations on externally persisted database files.
     * CERT_FILE - The https certificate file for the internal nginx instance.
@@ -43,4 +43,4 @@ Afterwards, run `docker compose build --pull && docker compose up` to boot up th
 
 `openssl req -x509 -nodes -out ./certs/fullchain.pem -keyout ./certs/privkey.pem`
 
-which will generate self signed certificates.
+which will generate self signed certificates. You must access with https: `https://localhost:8080` for example.

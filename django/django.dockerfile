@@ -12,6 +12,6 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 COPY . .
 
-RUN HOSTNAME=unused DEBUG=no SECRET=unused python manage.py makemigrations && HOSTNAME=unused DEBUG=no SECRET=unused python manage.py migrate
+RUN python manage.py makemigrations && python manage.py migrate
 
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "quizsite.asgi:application"]
