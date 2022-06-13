@@ -104,7 +104,7 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.app_directories.Loader',
 )
 
-WSGI_APPLICATION = 'quizsite.wsgi.application'
+# WSGI_APPLICATION = 'quizsite.wsgi.application'
 
 
 # Database

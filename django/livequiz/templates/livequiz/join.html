@@ -13,7 +13,7 @@
         const buttonInput = document.getElementById("join-game");
 
         buttonInput.onclick = function(e) {
-            const url = 'https://' + window.location.host + '/live/play/' + codeInput.value + '/'
+            const url = '/live/play/' + codeInput.value + '/'
             console.log('Attempting redirect to ', url);
             window.location = url
         }
