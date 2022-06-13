@@ -1,0 +1,20 @@
+{% extends "quiz/base.html" %}
+
+{% block title %}Playing game{% endblock %}
+
+{% block content %}
+
+<script>
+    const websocket_url = 'ws://' + window.location.host + '/ws/live/play/' + '{{game_code}}';
+
+    
+    const games_socket = new WebSocket(websocket_url);
+  
+    games_socket.onmessage = function(e) {
+        console.log('Message', e.data.message);
+    }
+    games_socket.onclose = function(e) {
+        console.log('Whoops. Socket closed.');
+    }
+</script>
+{% endblock %}

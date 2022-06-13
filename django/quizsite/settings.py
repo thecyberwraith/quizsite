@@ -58,7 +58,8 @@ ASGI_APPLICATION = "quizsite.asgi.application"
 # Application definition
 
 INSTALLED_APPS = [
-    'quiz.apps.QuizConfig',
+    'quiz',
+    'livequiz',
     'channels',
     'django.contrib.admin',
     'django.contrib.auth',

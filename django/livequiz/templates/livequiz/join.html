@@ -1,0 +1,26 @@
+{% extends "quiz/base.html" %}
+
+{% block title %}Join Me{% endblock %}
+
+{% block content %}
+    Input Game Code
+
+    <input type="text" id="game-code">
+    <input type="button" id="join-game" value="Join">
+
+    <script>
+        const codeInput = document.getElementById("game-code");
+        const buttonInput = document.getElementById("join-game");
+
+        buttonInput.onclick = function(e) {
+            const url = 'https://' + window.location.host + '/live/play/' + codeInput.value + '/'
+            console.log('Attempting redirect to ', url);
+            window.location = url
+        }
+        codeInput.onkeyup = function(e) {
+            if(e.keyCode == 13) {
+                buttonInput.click()
+            }
+        }
+    </script>
+{% endblock %}
