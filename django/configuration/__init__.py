@@ -9,6 +9,7 @@ from pathlib import Path
 
 LOG = Logger(__name__)
 
+
 def get_hostname() -> str:
     '''Attempt to read the SERVER_HOST_NAME environment variable.'''
     try:
@@ -25,7 +26,8 @@ def get_debug() -> bool:
     try:
         debug = environ['DEBUG']
     except KeyError:
-        LOG.warning("No 'DEBUG' environment variable present. Defaulting to true.")
+        LOG.warning(
+            "No 'DEBUG' environment variable present. Defaulting to true.")
         debug = 'true'
 
     return debug.lower() in ['yes', 'true']
@@ -42,7 +44,7 @@ def get_secret() -> str:
         return 'NOSECRETSHERE'
 
 
-def generate_config(base_dir: Path) -> dict:
+def generate_config(_: Path) -> dict:
     '''
     Creates a chained configuration that gives preference to environment
     variables, then production variables, then development variables.
