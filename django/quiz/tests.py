@@ -1,8 +1,73 @@
 from django.contrib.auth.models import User
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.urls import reverse
 
 from .models import QuizModel, CategoryModel, QuestionModel
+
+
+class TestUnauthenticatedSelectQuizPage(TestCase):
+    def get_response(self):
+        return self.client.get(reverse('quiz:select'))
+
+    def test_home_page_reachable(self):
+        response = self.get_response()
+        self.assertEqual(response.status_code, 200)
+
+    def test_no_available_self_quizzes_message(self):
+        response = self.get_response()
+        self.assertContains(response, 'No quizzes are available.')
+        self.assertEqual(list(response.context['self_quizzes']), [])
+
+    def test_available_quizzes_display(self):
+        q = QuizModel.objects.create(name='Sample Quiz', self_quiz_option=True)
+        response = self.get_response()
+        self.assertContains(response, 'Select an available quiz below.')
+        self.assertEqual(list(response.context['self_quizzes']), [q, ])
+        self.assertContains(response, q.name)
+
+
+class TestAuthenticatedSelectQuizPage(TestCase):
+    HOST_SECTION_TEXT = 'Host a quiz below.'
+    NO_QUIZZES_FOUND_TEXT = 'No quizzes are available to host.'
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='bob', password='nob')
+        self.client.login(username='bob', password='nob')
+
+    def get_response(self):
+        return self.client.get(reverse('quiz:select'))
+
+    def test_no_hosted_quizzes_section_shown_if_not_logged_in(self):
+        self.client.logout()
+        QuizModel.objects.create(name='A hosting quiz', host_option=True)
+        self.assertNotContains(self.get_response(), self.HOST_SECTION_TEXT)
+
+    def test_hosted_quizzes_section_shown_if_logged_in(self):
+        self.assertContains(self.get_response(), self.HOST_SECTION_TEXT)
+
+    def test_no_hosted_quizzes_shown_if_not_owned(self):
+        a = User.objects.create_user(username='sue', password='what')
+        q = QuizModel.objects.create(
+            name='Not my quiz.',
+            host_option=True,
+            owner=a
+        )
+
+        response = self.get_response()
+
+        self.assertContains(response, self.NO_QUIZZES_FOUND_TEXT)
+        self.assertListEqual(list(response.context['host_quizzes']), [])
+
+    def test_hosted_quiz_shown_if_owned(self):
+        quiz = QuizModel.objects.create(
+            name='Host me baby.',
+            host_option=True,
+            owner=self.user
+        )
+        response = self.get_response()
+        self.assertContains(response, 'Host a quiz below.')
+        self.assertContains(response, quiz.name)
+        self.assertListEqual(list(response.context['host_quizzes']), [quiz])
 
 
 class TestAnswerQuestionPage(TestCase):
@@ -28,7 +93,7 @@ class TestAnswerQuestionPage(TestCase):
             follow=follow,
         )
 
-    def test_redirect(self):
+    def test_redirect_to_quiz_page(self):
         response = self.get_response()
         self.assertRedirects(
             response,
@@ -80,58 +145,6 @@ class TestStartPage(TestCase):
         self.assertEqual(self.client.session['quiz'], self.quiz.id)
         self.assertEqual(self.client.session['answered'], [])
         self.assertEqual(self.client.session['score'], 0)
-
-
-class TestHomePage(TestCase):
-    def get_response(self):
-        return self.client.get(reverse('quiz:select'))
-
-    def test_home_page_reachable(self):
-        response = self.get_response()
-        self.assertEqual(response.status_code, 200)
-
-    def test_no_available_self_quizzes_message(self):
-        response = self.get_response()
-        self.assertContains(response, 'No quizzes are available.')
-        self.assertEqual(list(response.context['self_quizzes']), [])
-
-    def test_available_self_quizzes_message(self):
-        q = QuizModel.objects.create(name='Sample Quiz', self_quiz_option=True)
-        response = self.get_response()
-        self.assertContains(response, 'Select an available quiz below.')
-        self.assertEqual(list(response.context['self_quizzes']), [q, ])
-
-    def test_no_hosted_quizzes_shown_if_not_logged_in(self):
-        q = QuizModel.objects.create(name='A hosting quiz', host_option=True)
-        response = self.get_response()
-        self.assertNotContains(response, 'Host a quiz below.')
-
-    def test_no_hosted_quizzes_shown_if_not_owned(self):
-        q = QuizModel.objects.create(name='Not my quiz.')
-        q.host_option = True
-        a, _ = User.objects.create_user(username='bob', password='what'), User.objects.create_user(
-            username='nob', password='who')
-        q.owner = a
-        self.client.login(username='nob', password='what')
-        response = self.get_response()
-        self.assertNotContains(response, 'Host a quiz below.')
-
-    def test_hosted_quiz_shown_if_owned(self):
-        a = User.objects.create_user(username='bob', password='nope')
-        QuizModel.objects.create(
-            name='Host me baby.',
-            host_option=True,
-            owner=a
-        )
-        self.client.login(username='bob', password='nope')
-        response = self.get_response()
-        self.assertContains(response, 'Host a quiz below.')
-        self.assertContains(response, 'Host me baby.')
-
-    def test_available_quiz_table_row(self):
-        q = QuizModel.objects.create(name='A Quiz', self_quiz_option=True)
-        response = self.get_response()
-        self.assertContains(response, 'A Quiz')
 
 
 class TestQuizPage(TestCase):
