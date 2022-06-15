@@ -4,7 +4,7 @@
 
 <p>Select an available quiz below.</p>
 
-{% for quiz in available_quizzes %}
+{% for quiz in self_quizzes %}
 	<p>
 		{{ quiz.name }}
 		[<a href="{% url 'quiz:start' quiz.id %}">
@@ -18,5 +18,14 @@
 {% empty %}
 	No quizzes are available.
 {% endfor %}
+
+{% if user.is_authenticated %}
+	<p>Host a quiz below.</p>
+	{% for quiz in host_quizzes %}
+		<p>{{ quiz.name }}</p>
+	{% empty %}
+		No quizzes are available to host.
+	{% endfor %}
+{% endif %}
 
 {% endblock %}

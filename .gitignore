@@ -1,5 +1,5 @@
 __pycache__/
 *.sqlite3
-quiz/migrations/
+migrations
 certs/
 .env

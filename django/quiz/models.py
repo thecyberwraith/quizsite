@@ -1,10 +1,18 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class QuizModel(models.Model):
     name = models.CharField(max_length=100, unique=True,
                             blank=False, null=False)
-    is_active = models.BooleanField(default=True)
+
+    self_quiz_option = models.BooleanField(default=False)
+    host_option = models.BooleanField(default=False)
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+    )
 
     def __str__(self):
         return 'Quiz({})'.format(self.name)
@@ -13,6 +21,16 @@ class QuizModel(models.Model):
         ordering = ['name']
         verbose_name_plural = 'quizzes'
 
+    @staticmethod
+    def get_self_quizzes():
+        return QuizModel.objects.filter(self_quiz_option=True)
+    
+    @staticmethod
+    def get_hosted_quizzes(user: User):
+        return QuizModel.objects.filter(
+            host_option=True,
+            owner=user
+        )
 
 class CategoryModel(models.Model):
     name = models.CharField(max_length=100)
