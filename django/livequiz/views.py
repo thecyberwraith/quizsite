@@ -1,6 +1,9 @@
 from typing import Any
+from django.shortcuts import redirect
+from django.urls import reverse
 from django.views.generic import ListView, TemplateView, View
 
+from livequiz.models import LiveQuizModel
 from quiz.models import QuizModel
 
 
@@ -15,8 +18,23 @@ class ListHostableQuizzesPage(ListView):
 class LaunchRedirect(View):
     '''Performed setup for an authenticated user to launch a game.'''
 
-    def get(self, request, quiz_code):
-        return
+    def get(self, request, quiz_id):
+        fail_redirect = redirect(reverse('livequiz:list'))
+
+        if not request.user.is_authenticated:
+            return fail_redirect
+
+        try:
+            quiz = QuizModel.objects.get(id=quiz_id)
+        except QuizModel.DoesNotExist:
+            return fail_redirect
+
+        if quiz.owner != request.user:
+            return fail_redirect
+
+        livequiz = LiveQuizModel.register_for_quiz(quiz_id)
+
+        return redirect(reverse('livequiz:host', kwargs={'quiz_code': livequiz.code}))
 
 
 class JoinPage(TemplateView):
