@@ -37,8 +37,6 @@ class LiveQuizModel(models.Model):
         null=False
     )
 
-    registered_hosts = models.IntegerField(default=1)
-
     start_time = models.DateTimeField(
         auto_now_add=True
     )
@@ -76,36 +74,16 @@ class LiveQuizModel(models.Model):
     @staticmethod
     def register_for_quiz(quiz_id: int):
         '''
-        Signifies that a host is registering to manage this quiz. If a hosted quiz already exists,
-        we increment the registered hosts count. Otherwise, we create a new live quiz entry.
+        Signifies that a host is registering to manage this quiz.We create a new live quiz entry.
 
-        Returns the created/retrieved live quiz.
+        Returns the created live quiz.
         '''
-
-        try:
-            quiz = LiveQuizModel.objects.get(quiz__id=quiz_id)
-            quiz.registered_hosts += 1
-            quiz.save()
-            return quiz
-        except LiveQuizModel.DoesNotExist:
-            pass
-
         return LiveQuizModel.create_for_quiz(quiz_id=quiz_id)
 
     @staticmethod
-    def unregister_for_quiz(quiz_id: int):
+    def unregister(code: str):
         '''
-        Signifies that a host is unregistering from managing the quiz. If no more hosts are
-        managing, then the live quiz entry is deleted.
-
-        Returns boolean - True if the quiz is no longer managed.
+        Signifies that a host is unregistering from managing the quiz. This
+        deletes the quiz.
         '''
-        quiz = LiveQuizModel.objects.get(quiz__id=quiz_id)
-        quiz.registered_hosts -= 1
-
-        if quiz.registered_hosts <= 0:
-            quiz.delete()
-            return True
-
-        quiz.save()
-        return False
+        LiveQuizModel.objects.filter(code=code).delete()

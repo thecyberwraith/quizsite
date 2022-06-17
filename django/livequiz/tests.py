@@ -54,39 +54,19 @@ class TestLiveQuizModelRegisterAndUnregister(TestCase):
 
         self.assertEqual(models.LiveQuizModel.objects.count(), 1)
 
-    def test_register_does_not_make_copies(self):
+    def test_register_makes_unique_copies(self):
         self.assertEqual(models.LiveQuizModel.objects.count(), 0)
 
         results = [models.LiveQuizModel.register_for_quiz(
             self.quiz_id) for _ in range(10)]
 
-        self.assertEqual(models.LiveQuizModel.objects.count(), 1)
-        for i in range(1, 10):
-            self.assertEqual(results[0].code, results[i].code)
+        codes = {result.code for result in results}
 
-    def test_unregister_decrements_registered_hosts_count(self):
-        for _ in range(6):
-            quiz = models.LiveQuizModel.register_for_quiz(self.quiz_id)
+        self.assertEqual(len(codes), 10)
 
-        for _ in range(4):
-            models.LiveQuizModel.unregister_for_quiz(self.quiz_id)
-
-        self.assertEqual(models.LiveQuizModel.objects.get(
-            code=quiz.code).registered_hosts, 2)
-
-    def test_unregister_returns_false_when_registered_hosts_not_zero(self):
-        models.LiveQuizModel.register_for_quiz(self.quiz_id)
-        models.LiveQuizModel.register_for_quiz(self.quiz_id)
-        self.assertFalse(
-            models.LiveQuizModel.unregister_for_quiz(self.quiz_id))
-
-    def test_unregister_returns_true_when_registered_hosts_is_zero(self):
-        models.LiveQuizModel.register_for_quiz(self.quiz_id)
-        self.assertTrue(models.LiveQuizModel.unregister_for_quiz(self.quiz_id))
-
-    def test_unregister_deletes_quiz_when_hosts_is_zero(self):
+    def test_unregister_deletes_quiz(self):
         code = models.LiveQuizModel.register_for_quiz(self.quiz_id).code
-        models.LiveQuizModel.unregister_for_quiz(self.quiz_id)
+        models.LiveQuizModel.unregister(code)
         with self.assertRaises(models.LiveQuizModel.DoesNotExist):
             models.LiveQuizModel.objects.get(code=code)
 
