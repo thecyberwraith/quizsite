@@ -7,18 +7,20 @@ For more information on this file, see
 https://docs.djangoproject.com/en/4.0/howto/deployment/asgi/
 """
 
+from django.core.asgi import get_asgi_application
 import os
 
-import livequiz.routing
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'quizsite.settings')
+http_application = get_asgi_application()
+
 
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
-from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'quizsite.settings')
+import livequiz.routing
 
 application = ProtocolTypeRouter({
-    'http': get_asgi_application(),
+    'http': http_application,
     'websocket': AuthMiddlewareStack(
         URLRouter(
             livequiz.routing.websocket_urlpatterns
