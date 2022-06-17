@@ -23,14 +23,24 @@ class QuizModel(models.Model):
 
     @staticmethod
     def get_self_quizzes():
+        '''
+        Retrieves all quizzes that can be self quizzed.
+        '''
         return QuizModel.objects.filter(self_quiz_option=True)
-    
+
     @staticmethod
     def get_hosted_quizzes(user: User):
+        '''
+        Retrieves all quizzes that can be hosted by the current user.
+        '''
+        if not user.is_authenticated:
+            return []
+
         return QuizModel.objects.filter(
             host_option=True,
             owner=user
         )
+
 
 class CategoryModel(models.Model):
     name = models.CharField(max_length=100)

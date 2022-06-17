@@ -2,11 +2,9 @@ from unittest.mock import patch
 
 from django.db import DatabaseError
 from django.test import TestCase
-from django.urls import reverse
 
-from . import models
+import livequiz.models as models
 from quiz.models import QuizModel
-
 
 class TestLiveQuizModelCreateForQuizMethod(TestCase):
     '''Isolates tests to the LiveQuizModel'''
@@ -69,36 +67,3 @@ class TestLiveQuizModelRegisterAndUnregister(TestCase):
         models.LiveQuizModel.unregister(code)
         with self.assertRaises(models.LiveQuizModel.DoesNotExist):
             models.LiveQuizModel.objects.get(code=code)
-
-
-class PageBasedTest(TestCase):
-    '''A test that gets a page referenced by a reverse tag.'''
-    page_url_key = 'nope'
-    page_kwargs = None
-
-    def get_response(self):
-        '''Perform a get request referenced by 'page_url_key and return the response.'''
-        return self.client.get(reverse(self.page_url_key, kwargs=self.page_kwargs))
-
-
-class TestJoinPage(PageBasedTest):
-    page_url_key = 'livequiz:join'
-
-    def test_reachable(self):
-        self.assertEqual(self.get_response().status_code, 200)
-
-
-class TestPlayPage(PageBasedTest):
-    page_url_key = 'livequiz:play'
-    page_kwargs = {'quiz_code': 'abcde'}
-
-    def test_reachable(self):
-        self.assertEqual(self.get_response().status_code, 200)
-
-
-class TestHostPage(PageBasedTest):
-    page_url_key = 'livequiz:host'
-    page_kwargs = {'quiz_code': 'abcde'}
-
-    def test_reachable(self):
-        self.assertEqual(self.get_response().status_code, 200)

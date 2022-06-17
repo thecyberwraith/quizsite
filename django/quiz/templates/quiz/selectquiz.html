@@ -19,13 +19,4 @@
 	No quizzes are available.
 {% endfor %}
 
-{% if user.is_authenticated %}
-	<p>Host a quiz below.</p>
-	{% for quiz in host_quizzes %}
-		<p>{{ quiz.name }}</p>
-	{% empty %}
-		No quizzes are available to host.
-	{% endfor %}
-{% endif %}
-
 {% endblock %}

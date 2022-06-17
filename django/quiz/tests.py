@@ -5,7 +5,7 @@ from django.urls import reverse
 from .models import QuizModel, CategoryModel, QuestionModel
 
 
-class TestUnauthenticatedSelectQuizPage(TestCase):
+class TestSelfQuizListPage(TestCase):
     def get_response(self):
         return self.client.get(reverse('quiz:select'))
 
@@ -24,50 +24,6 @@ class TestUnauthenticatedSelectQuizPage(TestCase):
         self.assertContains(response, 'Select an available quiz below.')
         self.assertEqual(list(response.context['self_quizzes']), [q, ])
         self.assertContains(response, q.name)
-
-
-class TestAuthenticatedSelectQuizPage(TestCase):
-    HOST_SECTION_TEXT = 'Host a quiz below.'
-    NO_QUIZZES_FOUND_TEXT = 'No quizzes are available to host.'
-
-    def setUp(self):
-        self.user = User.objects.create_user(username='bob', password='nob')
-        self.client.login(username='bob', password='nob')
-
-    def get_response(self):
-        return self.client.get(reverse('quiz:select'))
-
-    def test_no_hosted_quizzes_section_shown_if_not_logged_in(self):
-        self.client.logout()
-        QuizModel.objects.create(name='A hosting quiz', host_option=True)
-        self.assertNotContains(self.get_response(), self.HOST_SECTION_TEXT)
-
-    def test_hosted_quizzes_section_shown_if_logged_in(self):
-        self.assertContains(self.get_response(), self.HOST_SECTION_TEXT)
-
-    def test_no_hosted_quizzes_shown_if_not_owned(self):
-        a = User.objects.create_user(username='sue', password='what')
-        q = QuizModel.objects.create(
-            name='Not my quiz.',
-            host_option=True,
-            owner=a
-        )
-
-        response = self.get_response()
-
-        self.assertContains(response, self.NO_QUIZZES_FOUND_TEXT)
-        self.assertListEqual(list(response.context['host_quizzes']), [])
-
-    def test_hosted_quiz_shown_if_owned(self):
-        quiz = QuizModel.objects.create(
-            name='Host me baby.',
-            host_option=True,
-            owner=self.user
-        )
-        response = self.get_response()
-        self.assertContains(response, 'Host a quiz below.')
-        self.assertContains(response, quiz.name)
-        self.assertListEqual(list(response.context['host_quizzes']), [quiz])
 
 
 class TestAnswerQuestionPage(TestCase):
