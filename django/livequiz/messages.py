@@ -27,19 +27,21 @@ class ClientMessage(metaclass=ABCMeta):
     _registered_handlers: dict[str, Type['ClientMessage']] = {}
 
     def __init_subclass__(cls, **kwargs) -> None:
-        super().__init_subclass__(**kwargs)
-        key = getattr(cls, 'MESSAGE_KEY', None)
-        registry = ClientMessage._registered_handlers
+        try:
+            key = kwargs.pop('message_key')
+        except KeyError as exception:
+            raise KeyError('ClientMessage subclass forgot to set "message_key"') from exception
 
-        if key is None:
-            raise NameError(
-                f'Client Message Subclass {cls} is missing MESSAGE_KEY.')
+        registry = ClientMessage._registered_handlers
 
         if key in registry:
             raise KeyError(
-                f'Client Message subclass message key clash: {cls} and {registry[key]}')
+                f'ClientMessage subclass message_key clash: {cls} and {registry[key]}')
 
-        ClientMessage._registered_handlers[key] = cls
+        registry[key] = cls
+
+        super().__init_subclass__(**kwargs)
+
 
     @staticmethod
     def get_handler(msg_type: str) -> Type['ClientMessage']:

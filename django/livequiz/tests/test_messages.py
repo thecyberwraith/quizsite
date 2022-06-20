@@ -5,27 +5,26 @@ import livequiz.messages as module
 
 class TestParentClientMessageClass(TestCase):
     def test_subclass_must_implement_handle_message(self):
-        class Terrible(module.ClientMessage):
-            MESSAGE_KEY = 'valid'
+        class Terrible(module.ClientMessage, message_key='valid'):
+            pass
+
         with self.assertRaises(TypeError):
             Terrible()
 
     
     def test_subclass_must_implement_message_key(self):
-        with self.assertRaises(NameError):
+        with self.assertRaises(KeyError):
             class NotGreat(module.ClientMessage):
                 async def handle_message(self, socket, data: dict) -> None:
                     pass
     
     def test_subclass_key_must_be_unique(self):
-        class Goodie(module.ClientMessage):
-            MESSAGE_KEY = 'a'
+        class Goodie(module.ClientMessage, message_key='a'):
             async def handle_message(self, socket, data: dict) -> None:
                 pass
         
         with self.assertRaises(KeyError):
-            class Baddie(module.ClientMessage):
-                MESSAGE_KEY = 'a'
+            class Baddie(module.ClientMessage, message_key='a'):
                 async def handle_message(self, socket, data: dict) -> None:
                     pass
     
@@ -38,8 +37,7 @@ class TestParentClientMessageClass(TestCase):
             await module.ClientMessage.handle(None, 'Wait... this is bad')
 
     async def test_data_passed_to_handler(self):
-        class Tester(module.ClientMessage):
-            MESSAGE_KEY = 'test'
+        class Tester(module.ClientMessage, message_key='test'):
             def __init__(self, data):
                 pass
             async def handle_message(self, socket, data: dict) -> None:
