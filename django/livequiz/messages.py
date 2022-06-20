@@ -1,65 +1,68 @@
 '''
-Contains methods for parsing and creating messages on the server side for a live quiz.
+Handles messages from the client to the server.
 '''
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
+
+from abc import ABCMeta, abstractmethod
+from typing import Type
+
+from livequiz.consumers import LiveQuizConsumer
+
+
+class UnexpectedMessageException(Exception):
+    '''Thrown when a suitable message type is not found.'''
+
+    def __init__(self, msg_type, *args: object) -> None:
+        super().__init__(
+            f'Unexpected message type {msg_type} encountered.', *args)
 
 
 class MalformedMessageException(Exception):
-    '''Thrown when a ClientMessage subclass was not able to handle the given data.'''
-    pass
+    '''Thrown when a message cannot be parsed for the given type.'''
 
 
-class UnexpectedMessageType(Exception):
-    '''Thrown when no suitable message parser exists.'''
-    pass
-
-
-class ClientMessage:
+class ClientMessage(metaclass=ABCMeta):
     '''
-    Creates a python object for a message coming from the client.
-
-    Subclasses must handle the data dictionary from a message in their constructor and
-    throw a 'MalformedMessageException' if it is not formatted properly.
-
-    Handling the consequences of a message are left to the 'handle_message' method.
+    A generic handler for client messages. Subclass for functionality.
     '''
-    _message_map = {}
+    _registered_handlers: dict[str, Type['ClientMessage']] = {}
 
-    def __init_subclass__(cls) -> None:
-        if not hasattr(cls, 'MESSAGE_KEY'):
-            raise Exception(
-                f'All subclasses must specify a message key. Check {cls}.')
-        if cls.MESSAGE_KEY in cls._message_map:
-            raise Exception(
-                f'Class message keys clash: {cls} and {cls._message_map[cls.MESSAGE_KEY]}.')
+    def __init_subclass__(cls, **kwargs) -> None:
+        super().__init_subclass__(**kwargs)
+        key = getattr(cls, 'MESSAGE_KEY', None)
+        registry = ClientMessage._registered_handlers
 
-        cls._message_map[cls.MESSAGE_KEY] = cls
+        if key is None:
+            raise NameError(
+                f'Client Message Subclass {cls} is missing MESSAGE_KEY.')
 
-    async def handle_message(self, socket: AsyncJsonWebsocketConsumer) -> None:
-        '''Perform asynchronous actions to fulfill the message request.'''
-        pass
+        if key in registry:
+            raise KeyError(
+                f'Client Message subclass message key clash: {cls} and {registry[key]}')
+
+        ClientMessage._registered_handlers[key] = cls
 
     @staticmethod
-    async def handle_client_message(socket: AsyncJsonWebsocketConsumer, message_type: str, data: dict) -> None:
-        '''Hands the given data for a specified message type to the appropriate class'''
-        if message_type not in ClientMessage._message_map:
-            raise UnexpectedMessageType(f'{message_type} is not handled.')
+    def get_handler(msg_type: str) -> Type['ClientMessage']:
+        '''Attempts to fetch a suitable handling class.'''
+        if not msg_type in ClientMessage._registered_handlers:
+            raise UnexpectedMessageException(msg_type)
 
-        parser = ClientMessage._message_map[message_type](data)
-        await parser.handle_message(socket)
+        return ClientMessage._registered_handlers[msg_type]
 
+    @staticmethod
+    async def handle(socket: LiveQuizConsumer, message: dict) -> None:
+        '''
+        Passes the given message information to an appropriate handler.'''
+        try:
+            msg_type = message['type']
+            data = message['payload']
+        except Exception as exception:
+            raise UnexpectedMessageException('format') from exception
 
-class PlayerUpdateRequest(ClientMessage):
-    MESSAGE_KEY = 'update player'
+        klass = ClientMessage.get_handler(msg_type=msg_type)
+        handler = klass(data)
+        await handler.handle_message(socket, data)
 
-
-class HostChangeViewRequest(ClientMessage):
-    MESSAGE_KEY = 'change view'
-
-
-class CurrentViewRequest(ClientMessage):
-    MESSAGE_KEY = 'request view update'
-
-
-def send_current_view(socket: AsyncJsonWebsocketConsumer, view_data):
-    '''Sends a message with the current view.'''
+    @abstractmethod
+    async def handle_message(self, socket, data: dict) -> None:
+        '''Attempts to handle the request from the client.'''

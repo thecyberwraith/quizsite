@@ -74,6 +74,12 @@ def get_quiz_and_owner(quiz_code):
     return livequiz.quiz, livequiz.quiz.owner
 
 
+class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
+    '''
+    Generic consumer for LiveQuiz interactions that utilizes the messages and reponses
+    module.
+    '''
+
 class LiveQuizHostConsumer(AsyncJsonWebsocketConsumer):
     '''
     Represents the connection to a host who is currently running a live quiz.
