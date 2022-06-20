@@ -5,8 +5,7 @@ Handles messages from the client to the server.
 from abc import ABCMeta, abstractmethod
 from typing import Type
 
-from livequiz.consumers import LiveQuizConsumer
-
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 class UnexpectedMessageException(Exception):
     '''Thrown when a suitable message type is not found.'''
@@ -14,6 +13,13 @@ class UnexpectedMessageException(Exception):
     def __init__(self, msg_type, *args: object) -> None:
         super().__init__(
             f'Unexpected message type {msg_type} encountered.', *args)
+
+
+class HostOnlyException(Exception):
+    '''Thrown when a non-host attempts to send a host only message.'''
+
+    def __init__(self, *args: object) -> None:
+        super().__init__('Cannot use this message type: reserved for hosts only.')
 
 
 class MalformedMessageException(Exception):
@@ -30,7 +36,10 @@ class ClientMessage(metaclass=ABCMeta):
         try:
             key = kwargs.pop('message_key')
         except KeyError as exception:
-            raise KeyError('ClientMessage subclass forgot to set "message_key"') from exception
+            raise KeyError(
+                'ClientMessage subclass forgot to set "message_key"') from exception
+
+        host_only = kwargs.pop('host_only', False)
 
         registry = ClientMessage._registered_handlers
 
@@ -38,21 +47,25 @@ class ClientMessage(metaclass=ABCMeta):
             raise KeyError(
                 f'ClientMessage subclass message_key clash: {cls} and {registry[key]}')
 
-        registry[key] = cls
+        registry[key] = (host_only, cls)
 
         super().__init_subclass__(**kwargs)
 
-
     @staticmethod
-    def get_handler(msg_type: str) -> Type['ClientMessage']:
+    def get_handler(is_host: bool, msg_type: str) -> Type['ClientMessage']:
         '''Attempts to fetch a suitable handling class.'''
         if not msg_type in ClientMessage._registered_handlers:
             raise UnexpectedMessageException(msg_type)
 
-        return ClientMessage._registered_handlers[msg_type]
+        host_only, klass = ClientMessage._registered_handlers[msg_type]
+
+        if host_only and not is_host:
+            raise HostOnlyException()
+
+        return klass
 
     @staticmethod
-    async def handle(socket: LiveQuizConsumer, message: dict) -> None:
+    async def handle(socket: AsyncJsonWebsocketConsumer, message: dict, is_host=False) -> None:
         '''
         Passes the given message information to an appropriate handler.'''
         try:
@@ -61,7 +74,10 @@ class ClientMessage(metaclass=ABCMeta):
         except Exception as exception:
             raise UnexpectedMessageException('format') from exception
 
-        klass = ClientMessage.get_handler(msg_type=msg_type)
+        klass = ClientMessage.get_handler(
+            is_host,
+            msg_type=msg_type)
+
         handler = klass(data)
         await handler.handle_message(socket, data)
 
