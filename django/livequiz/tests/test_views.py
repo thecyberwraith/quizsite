@@ -94,7 +94,7 @@ class TestLiveQuizList(TestCase):
         other_user = User.objects.create_user(username='sue', password='sue')
         other_quiz = QuizModel.objects.create(
             name='Other Quiz', owner=other_user)
-        LiveQuizModel.create_for_quiz(other_quiz.id)
+        LiveQuizModel.objects.create_for_quiz(other_quiz.id)
 
         response = self.get_response()
 
@@ -108,7 +108,7 @@ class TestLiveQuizList(TestCase):
         )
 
     def test_live_quiz_shown_if_logged_in_and_owned(self):
-        LiveQuizModel.create_for_quiz(self.quiz.id)
+        LiveQuizModel.objects.create_for_quiz(self.quiz.id)
 
         response = self.get_response()
 
@@ -195,7 +195,7 @@ class TestDeletePage(TestCase):
         cls.user = User.objects.create_user(
             username='linda', password='belcher')
         cls.quiz = QuizModel.objects.create(name='something', owner=cls.user)
-        cls.livequiz = LiveQuizModel.create_for_quiz(cls.quiz.id)
+        cls.livequiz = LiveQuizModel.objects.create_for_quiz(cls.quiz.id)
 
     def setUp(self) -> None:
         self.client.login(username='linda', password='belcher')
@@ -212,7 +212,7 @@ class TestDeletePage(TestCase):
 
     def test_does_nothing_if_quiz_is_not_owned_by_user(self):
         other_quiz = QuizModel.objects.create(name='Dummy')
-        livequiz = LiveQuizModel.create_for_quiz(other_quiz.id)
+        livequiz = LiveQuizModel.objects.create_for_quiz(other_quiz.id)
 
         self.assertEqual(LiveQuizModel.objects.filter(
             code=livequiz.code).count(), 1)

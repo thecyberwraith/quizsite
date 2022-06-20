@@ -37,7 +37,7 @@ class TestHostConsumerConnectionStates(TestCase):
     @database_sync_to_async
     def add_quiz_info(self, owner=None):
         quiz = QuizModel.objects.create(name='A Quiz', owner=owner)
-        return LiveQuizModel.create_for_quiz(quiz.id).code
+        return LiveQuizModel.objects.create_for_quiz(quiz.id).code
 
     async def login_connect(self, user, code='ABCDEf'):
         org_func = LiveQuizHostConsumer.connect

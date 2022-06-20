@@ -17,12 +17,6 @@ class QuizSelectPage(generic.TemplateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
-        quizzes = []
-
-        if self.request.user.is_authenticated:
-            quizzes = QuizModel.get_hosted_quizzes(self.request.user)
-        context['host_quizzes'] = quizzes
-
         context['self_quizzes'] = QuizModel.get_self_quizzes()
 
         return context

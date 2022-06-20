@@ -14,7 +14,7 @@ class ListHostableQuizzesPage(TemplateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context['host_quizzes'] = QuizModel.get_hosted_quizzes(self.request.user)
-        context['live_quizzes'] = LiveQuizModel.get_owned_by_user(self.request.user)
+        context['live_quizzes'] = LiveQuizModel.objects.owned_by_user(self.request.user)
         return context
 
 class LaunchRedirect(View):
@@ -35,7 +35,7 @@ class LaunchRedirect(View):
         if quiz.owner != request.user:
             return fail_redirect
 
-        livequiz = LiveQuizModel.create_for_quiz(quiz_id)
+        livequiz = LiveQuizModel.objects.create_for_quiz(quiz_id)
 
         return redirect(reverse('livequiz:host', kwargs={'quiz_code': livequiz.code}))
 
