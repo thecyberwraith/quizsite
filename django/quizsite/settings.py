@@ -113,6 +113,18 @@ DATABASES =  {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
+
+if not DEBUG:
+    CHANNEL_LAYERS['default']['BACKEND'] = "channels_redis.core.RedisChannelLayer"
+    CHANNEL_LAYERS['CONFIG'] = {
+        "hosts": [('redis', 6379)]
+    }
+
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 

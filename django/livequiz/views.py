@@ -1,24 +1,27 @@
+import re
 from typing import Any
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.views.generic import ListView, TemplateView, View
+from django.views.generic import TemplateView, View
 
 from livequiz.models import LiveQuizModel
 from quiz.models import QuizModel
 
 
-class ListHostableQuizzesPage(ListView):
+class ListHostableQuizzesPage(TemplateView):
     template_name = 'livequiz/list_hostable.html'
-    context_object_name = 'host_quizzes'
 
-    def get_queryset(self):
-        return QuizModel.get_hosted_quizzes(self.request.user)
-
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['host_quizzes'] = QuizModel.get_hosted_quizzes(self.request.user)
+        context['live_quizzes'] = LiveQuizModel.get_owned_by_user(self.request.user)
+        return context
 
 class LaunchRedirect(View):
     '''Performed setup for an authenticated user to launch a game.'''
 
-    def get(self, request, quiz_id):
+    def post(self, request):
+        quiz_id = request.POST['quiz_id']
         fail_redirect = redirect(reverse('livequiz:list'))
 
         if not request.user.is_authenticated:
@@ -32,9 +35,28 @@ class LaunchRedirect(View):
         if quiz.owner != request.user:
             return fail_redirect
 
-        livequiz = LiveQuizModel.register_for_quiz(quiz_id)
+        livequiz = LiveQuizModel.create_for_quiz(quiz_id)
 
         return redirect(reverse('livequiz:host', kwargs={'quiz_code': livequiz.code}))
+
+
+class DeleteRedirect(View):
+    '''Remove a particular live quiz.'''
+
+    def post(self, request):
+        return_value = redirect(reverse('livequiz:list'))
+        livequiz_code = request.POST['livequiz_code']
+        if not request.user.is_authenticated:
+            return return_value
+        
+        try:
+            livequiz = LiveQuizModel.objects.get(code=livequiz_code)
+            if livequiz.quiz.owner == request.user:
+                livequiz.delete()
+        except LiveQuizModel.DoesNotExist:
+            pass
+    
+        return return_value
 
 
 class JoinPage(TemplateView):
@@ -48,7 +70,7 @@ class FixedQuizPage(TemplateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["quiz_code"] = kwargs['quiz_code']
-
+        return context
 
 class HostPage(FixedQuizPage):
     '''The view that the host gets of a live quiz.'''

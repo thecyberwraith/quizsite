@@ -11,6 +11,8 @@ services:
       - SERVER_HOST_NAME=$SERVER_HOST_NAME
     volumes:
       - $DATABASE_FILE:/usr/app/src/db.sqlite3
+  redis:
+    image: redis
   nginx:
     build:
       context: .

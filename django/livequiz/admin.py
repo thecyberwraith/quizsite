@@ -1,3 +1,4 @@
 from django.contrib import admin
+from livequiz.models import LiveQuizModel
 
-# Register your models here.
+admin.site.register(LiveQuizModel)

@@ -1,5 +1,6 @@
 from string import ascii_uppercase, digits
 
+from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
 from django.db import models, IntegrityError, DatabaseError
 
@@ -47,10 +48,10 @@ class LiveQuizModel(models.Model):
 
     )
 
-    last_view_data = models.CharField(
-        max_length=1024,
-        null=True
-    )
+    @property
+    def group_name(self):
+        '''Returns the unique channels group_name for this quiz.'''
+        return f'livequiz_group_{self.code}'
 
     @staticmethod
     def create_for_quiz(quiz_id: int):
@@ -70,20 +71,45 @@ class LiveQuizModel(models.Model):
         raise DatabaseError(
             f'Failed to create unique code for LiveQuiz within {UNIQUE_RETRIES} tries.'
         )
+    
+    @staticmethod
+    def get_owned_by_user(user: User):
+        if not user.is_authenticated:
+            return []
+        
+        return LiveQuizModel.objects.filter(quiz__owner=user)
+
+
+class LiveQuizParticipant(models.Model):
+    socket_name = models.CharField(
+        max_length=256,
+        unique=True
+    )
+    name = models.CharField(
+        max_length=128
+    )
+    score = models.IntegerField(
+        default=0
+    )
+    quiz = models.ForeignKey(
+        to=LiveQuizModel,
+        on_delete=models.CASCADE,
+        related_name='participants'
+    )
 
     @staticmethod
-    def register_for_quiz(quiz_id: int):
+    def register_participant(quiz_code, name, socket_name, old_socket_name=None):
         '''
-        Signifies that a host is registering to manage this quiz.We create a new live quiz entry.
-
-        Returns the created live quiz.
+        Called when a participant is added to the game. If they want to reconnect
+        to an already existing participant, the old_socket_name must point to an
+        already existing participant. Otherwise, the participant is created.
         '''
-        return LiveQuizModel.create_for_quiz(quiz_id=quiz_id)
-
-    @staticmethod
-    def unregister(code: str):
-        '''
-        Signifies that a host is unregistering from managing the quiz. This
-        deletes the quiz.
-        '''
-        LiveQuizModel.objects.filter(code=code).delete()
+        quiz = LiveQuizModel.objects.get(quiz_code=quiz_code)
+        LiveQuizParticipant.objects.update_or_create(
+            defaults={
+                'name': name,
+                'socket_name': socket_name,
+                'quiz': quiz
+            },
+            socket_name=old_socket_name
+        )

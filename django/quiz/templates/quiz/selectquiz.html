@@ -19,4 +19,9 @@
 	No quizzes are available.
 {% endfor %}
 
+{% if user.is_authenticated %}
+	<a href="{% url 'livequiz:list' %}">Host a quiz.</a>
+{% endif %}
+
+<a href="{% url 'livequiz:join' %}">Join a quiz.</a>
 {% endblock %}

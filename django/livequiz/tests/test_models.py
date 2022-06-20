@@ -6,6 +6,7 @@ from django.test import TestCase
 import livequiz.models as models
 from quiz.models import QuizModel
 
+
 class TestLiveQuizModelCreateForQuizMethod(TestCase):
     '''Isolates tests to the LiveQuizModel'''
 
@@ -39,31 +40,3 @@ class TestLiveQuizModelCreateForQuizMethod(TestCase):
             models.LiveQuizModel.create_for_quiz(self.quizA.id).code,
             'CBA'
         )
-
-
-class TestLiveQuizModelRegisterAndUnregister(TestCase):
-    def setUp(self):
-        self.quiz_id = QuizModel.objects.create(name='A quiz').id
-
-    def test_register_initially_creates(self):
-        self.assertEqual(models.LiveQuizModel.objects.count(), 0)
-
-        models.LiveQuizModel.register_for_quiz(self.quiz_id)
-
-        self.assertEqual(models.LiveQuizModel.objects.count(), 1)
-
-    def test_register_makes_unique_copies(self):
-        self.assertEqual(models.LiveQuizModel.objects.count(), 0)
-
-        results = [models.LiveQuizModel.register_for_quiz(
-            self.quiz_id) for _ in range(10)]
-
-        codes = {result.code for result in results}
-
-        self.assertEqual(len(codes), 10)
-
-    def test_unregister_deletes_quiz(self):
-        code = models.LiveQuizModel.register_for_quiz(self.quiz_id).code
-        models.LiveQuizModel.unregister(code)
-        with self.assertRaises(models.LiveQuizModel.DoesNotExist):
-            models.LiveQuizModel.objects.get(code=code)

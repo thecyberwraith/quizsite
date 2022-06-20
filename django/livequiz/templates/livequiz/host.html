@@ -1,5 +1,10 @@
 {% extends "livequiz/base.html" %}
-
+{% load static %}
 {% block content %}
-Hosting game.
+
+<script type="module">
+    import { setup } from "{% static 'livequiz/js/host.js' %}"
+
+    setup('{{quiz_code}}');
+</script>
 {% endblock %}
