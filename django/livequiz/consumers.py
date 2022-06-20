@@ -135,7 +135,7 @@ class LiveQuizHostConsumer(LiveQuizConsumer):
         return errors
 
     async def disconnect(self, code):
-        super().disconnect(code)
+        await super().disconnect(code)
 
         LOG.info('Host disconnecting from live quiz %s with code %s',
                  self.quiz_code,
