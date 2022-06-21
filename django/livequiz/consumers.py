@@ -7,22 +7,7 @@ from django.contrib.auth.models import User
 
 from livequiz.messages import ClientMessage
 from livequiz.models import LiveQuizModel
-
-
-def get_error_message(messages):
-    '''Returns a dictionary containing the error message.'''
-    return {
-        'error': {
-            'message': messages
-        }
-    }
-
-
-def get_success_message():
-    '''Returns a dictionary with a success message.'''
-    return {
-        'message': 'Successfully connected.'
-    }
+from livequiz.responses import get_error_message, get_info_message
 
 
 @database_sync_to_async
@@ -145,7 +130,7 @@ class LiveQuizHostConsumer(LiveQuizConsumer):
 
     async def on_successful_connect(self):
         await super().on_successful_connect()
-        await self.send_json(get_success_message())
+        await self.send_json(get_info_message('Connected successfully.'))
         LOG.debug('Host successfully connect to quiz %s', self.quiz_code)
 
         

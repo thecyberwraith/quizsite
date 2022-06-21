@@ -65,16 +65,16 @@ class TestHostConsumerConnectionStates(TestCase):
     async def test_requires_authentication(self):
         await self.connect_with_code()
         response = await self.communicator.receive_json_from()
-        self.assertIn('error', response)
+        self.assertEqual('error', response['type'])
 
     @asyncSelfManage
     async def test_requires_livequiz_exists(self):
         user = await self.add_user_info()
         await self.login_connect(user)
 
-        self.assertIn(
+        self.assertEqual(
             'error',
-            await self.communicator.receive_json_from()
+            (await self.communicator.receive_json_from())['type']
         )
 
     @asyncSelfManage
@@ -83,9 +83,9 @@ class TestHostConsumerConnectionStates(TestCase):
         code = await self.add_quiz_info()
         await self.login_connect(user, code)
 
-        self.assertIn(
+        self.assertEqual(
             'error',
-            await self.communicator.receive_json_from()
+            (await self.communicator.receive_json_from())['type']
         )
 
     @asyncSelfManage
@@ -95,7 +95,7 @@ class TestHostConsumerConnectionStates(TestCase):
 
         await self.login_connect(user, quiz_code)
 
-        self.assertNotIn(
+        self.assertNotEqual(
             'error',
-            await self.communicator.receive_json_from()
+            (await self.communicator.receive_json_from())['type']
         )
