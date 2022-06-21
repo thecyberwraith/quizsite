@@ -52,10 +52,12 @@ class LiveQuizManager(models.Manager):
                 self.get(code=code)
                 code = generate_random_slug()
             except LiveQuizModel.DoesNotExist:
-                return LiveQuizModel.objects.create(
+                model = LiveQuizModel.objects.create(
                     code=code,
                     quiz=quiz
                 )
+                model.set_view(LiveQuizView.QUIZ_BOARD)
+                return model
 
         raise DatabaseError(
             f'Failed to create unique code for LiveQuiz within {UNIQUE_RETRIES} tries.'

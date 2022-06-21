@@ -7,7 +7,6 @@ import livequiz.models as models
 from quiz.models import CategoryModel, QuizModel
 
 
-
 class TestLiveQuizModelCreateForQuizMethod(TestCase):
     '''Isolates tests to the LiveQuizModel'''
 
@@ -40,6 +39,31 @@ class TestLiveQuizModelCreateForQuizMethod(TestCase):
         self.assertEqual(
             models.LiveQuizModel.objects.create_for_quiz(self.quizA.id).code,
             'CBA'
+        )
+
+    def test_initializes_last_view_to_quiz_board(self):
+        category = self.quizA.categories.create(name='Test')
+        q_id = category.questions.create(
+            question_text='Who am',
+            solution_text='I?',
+            value=100
+        )
+
+        model = models.LiveQuizModel.objects.create_for_quiz(self.quizA.id)
+
+        self.assertEqual(
+            model.last_view_command,
+            {
+                'view': models.LiveQuizView.QUIZ_BOARD.value,
+                'data': {
+                    'Test': [
+                        {
+                            'id': q_id.id,
+                            'value': 100
+                        }
+                    ]
+                }
+            }
         )
 
 
