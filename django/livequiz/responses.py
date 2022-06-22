@@ -20,7 +20,7 @@ def get_generic_message(msg_type: MessageTypes, payload: object):
         'payload': payload
     }
 
-def get_current_quiz_view_method(live_quiz: LiveQuizModel):
+def get_current_quiz_view_message(live_quiz: LiveQuizModel):
     '''
     Sets what the client should be looking at.
     '''
