@@ -1,3 +1,5 @@
+{% load static %}
+<!DOCTYPE html>
 <html>
 	<head>
 		<title>{% block title %}Quiz Site{% endblock %}</title>
@@ -24,8 +26,12 @@
 				text-decoration: none;
 			}
 		</style>
-		{% block special_style %}{% endblock %}
-		{% block special_script %}{% endblock %}
+		<link rel="apple-touch-icon" sizes="180x180" href="{% static 'quiz/favicon/apple-touch-icon.png' %}">
+		<link rel="icon" type="image/png" sizes="32x32" href="{% static 'quiz/favicon/favicon-32x32.png'%}">
+		<link rel="icon" type="image/png" sizes="16x16" href="{% static 'quiz/favicon/favicon-16x16.png'%}">
+		<link rel="manifest" href="{% static 'quiz/favicon/site.webmanifest' %}">
+		{% block more_styles %}{% endblock %}
+		{% block more_scripts %}{% endblock %}
 	</head>
 	<body>
 		<header>
