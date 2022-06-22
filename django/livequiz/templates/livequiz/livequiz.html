@@ -1,0 +1,24 @@
+{% extends "livequiz/base.html" %}
+{% load static %}
+
+{% block more_styles %}
+    {{ block.super }}
+    <link href="{% static 'livequiz/css/board.css'%}" rel='stylesheet'>
+{% endblock %}
+
+{% block content %}
+    {% comment %} <template id='template_livequiz_board'> {% endcomment %}
+        <div id='livequiz_board'>
+            <div>
+                <h2>Test Category</h2>
+                <a>100</a>
+                <a>200</a>
+            </div>
+            <div>
+                <h2>Other Category</h2>
+                <a>100</a>
+            </div>
+        </div>
+    {% comment %} </template> {% endcomment %}
+    <div id='livequiz_content_div'></div>
+{% endblock %}

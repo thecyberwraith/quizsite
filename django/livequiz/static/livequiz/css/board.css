@@ -1,0 +1,35 @@
+#livequiz_board {
+    display: flex;
+}
+
+#livequiz_board > div {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+#livequiz_board > div > h2 {
+    background: #1122CC;
+    border-radius: 25px;
+    padding: 50px;
+    margin: 15px;
+    border: 5px solid white;
+}
+
+#livequiz_board > div > a, p {
+    background: #1122CC;
+    border-radius: 25px;
+    padding: 30px;
+    margin: 15px;
+    border: 3px solid white;
+}
+
+#livequiz_board > div > a:hover, p:hover {
+    background: #0011AA;
+    border-radius: 25px;
+    padding: 30px;
+    margin: 15px;
+    border: 3px solid white;
+    color: #AA9911;
+}

@@ -1,6 +1,7 @@
-{% extends "livequiz/base.html" %}
+{% extends "livequiz/livequiz.html" %}
 {% load static %}
 {% block content %}
+{{ block.super }}
 
 <script type="module">
     import { setup } from "{% static 'livequiz/js/host.js' %}"
