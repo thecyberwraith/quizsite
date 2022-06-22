@@ -9,6 +9,7 @@ export class LiveQuizWebsocket {
 
     establishConnection() {
         let url = getWebsocketURLFromLocation(this.relativeURL);
+        console.log('Attempting websocket at', url);
         this.socket = new WebSocket(url);
         this.socket.onopen = (e) => this.onSocketOpen(e);
         this.socket.onclose = (e) => this.onSocketClose(e);
@@ -26,7 +27,7 @@ export class LiveQuizWebsocket {
                 this.socket.close();
             }
             console.log('Attempting to reconnect in 5 seconds.');
-            setTimeout(this.establishConnection, 5000);
+            setTimeout(() => {this.establishConnection();}, 5000);
         }
         else {
             console.info('Server intentionally closed connection.');
