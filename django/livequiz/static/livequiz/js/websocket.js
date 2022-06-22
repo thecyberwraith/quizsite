@@ -10,9 +10,9 @@ export class LiveQuizWebsocket {
     establishConnection() {
         let url = getWebsocketURLFromLocation(this.relative_url);
         this.socket = new WebSocket(url);
-        this.socket.onopen = this.onSocketOpen;
-        this.socket.onclose = this.onSocketClose;
-        this.socket.onmessage = this.onSocketMessage;
+        this.socket.onopen = (e) => this.onSocketOpen(e);
+        this.socket.onclose = (e) => this.onSocketClose(e);
+        this.socket.onmessage = (e) => this.onSocketMessage(e);
     }
 
     onSocketOpen(e) {
@@ -33,6 +33,19 @@ export class LiveQuizWebsocket {
     }
 
     onSocketMessage(e) {
-        console.log('Message: ', e.data);
+        let data = JSON.parse(e.data);
+        let type = data.type;
+        let payload = data.payload;
+
+        switch (type) {
+            case 'set view':
+                this.render_view(payload);
+                break;
+            default:
+                console.error('Unmatched message');
+                console.log(typeof(e.data));
+            }
     }
+
+    render_view(payload) {}
 }
