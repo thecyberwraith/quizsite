@@ -1,14 +1,14 @@
 import { getWebsocketURLFromLocation } from "./util.js"
 
 export class LiveQuizWebsocket {
-    constructor(relative_url) {
-        this.relative_url = relative_url;
+    constructor(relativeURL) {
+        this.relativeURL = relativeURL;
         this.socket = null;
         this.establishConnection();
     }
 
     establishConnection() {
-        let url = getWebsocketURLFromLocation(this.relative_url);
+        let url = getWebsocketURLFromLocation(this.relativeURL);
         this.socket = new WebSocket(url);
         this.socket.onopen = (e) => this.onSocketOpen(e);
         this.socket.onclose = (e) => this.onSocketClose(e);
@@ -21,6 +21,7 @@ export class LiveQuizWebsocket {
 
     onSocketClose(e) {
         if (!e.wasClean) {
+            console.warn('Detecting unclean disconnect from server.');
             if (this.socket !== null) {
                 this.socket.close();
             }
@@ -39,13 +40,12 @@ export class LiveQuizWebsocket {
 
         switch (type) {
             case 'set view':
-                this.render_view(payload);
+                this.renderView(payload);
                 break;
             default:
-                console.error('Unmatched message');
-                console.log(typeof(e.data));
+                console.error('Unmatched message', type);
             }
     }
 
-    render_view(payload) {}
+    renderView(payload) {console.log('whoops.')}
 }
