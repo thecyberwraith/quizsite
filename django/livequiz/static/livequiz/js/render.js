@@ -1,6 +1,16 @@
 const contentDiv = document.getElementById('livequiz_content_div');
 
 export class ClientViewRenderer {
+    renderTemplate(which) {
+        let template = document.getElementById(which);
+        if (!template) {
+            console.error('Missing template id', which);
+            return;
+        }
+        contentDiv.children[0].remove()
+        contentDiv.appendChild(template.content.cloneNode(true));
+    }
+
     renderView(payload) {
         let name = payload.view
         let data = payload.data

@@ -1,7 +1,8 @@
 import { getWebsocketURLFromLocation } from "./util.js"
 
 export class LiveQuizWebsocket {
-    constructor(relativeURL) {
+    constructor(relativeURL, renderer) {
+        this.renderer = renderer;
         this.relativeURL = relativeURL;
         this.socket = null;
         this.establishConnection();
@@ -26,6 +27,7 @@ export class LiveQuizWebsocket {
             if (this.socket !== null) {
                 this.socket.close();
             }
+            this.renderer.renderTemplate('connection-error-template');
             console.log('Attempting to reconnect in 5 seconds.');
             setTimeout(() => {this.establishConnection();}, 5000);
         }
@@ -41,7 +43,7 @@ export class LiveQuizWebsocket {
 
         switch (type) {
             case 'set view':
-                this.renderView(payload);
+                this.renderer.renderView(payload);
                 break;
             case 'info':
                 console.log('Server Message:', payload);
@@ -50,6 +52,4 @@ export class LiveQuizWebsocket {
                 console.error('Unmatched message', type);
             }
     }
-
-    renderView(payload) {console.log('whoops.')}
 }

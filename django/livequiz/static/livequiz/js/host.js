@@ -4,9 +4,9 @@ import { ClientViewRenderer } from "./render.js";
 let connection = null;
 
 export function setup(quiz_code) {
-    connection = new LiveQuizWebsocket('/ws/live/host/' + quiz_code);
-    let renderer = new HostViewRenderer();
-    connection.renderView = (payload) => {renderer.renderView(payload);};
+    connection = new LiveQuizWebsocket(
+        '/ws/live/host/' + quiz_code,
+        new HostViewRenderer());
 }
 
 class HostViewRenderer extends ClientViewRenderer {

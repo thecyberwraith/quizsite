@@ -17,7 +17,7 @@
     border: 5px solid white;
 }
 
-#livequiz_board > div > a, p {
+#livequiz_board > div > a, #livequiz_board > div > p {
     background: #1122CC;
     border-radius: 25px;
     padding: 30px;
@@ -25,7 +25,7 @@
     border: 3px solid white;
 }
 
-#livequiz_board > div > a:hover, p:hover {
+#livequiz_board > div > a:hover, #livequiz_board > div > p:hover {
     background: #0011AA;
     border-radius: 25px;
     padding: 30px;
