@@ -22,9 +22,10 @@ class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
     Generic consumer for LiveQuiz interactions that utilizes the messages and reponses
     module.
     '''
+
     def __init__(self, *args, **kwargs):
         self.quiz_code = None
-        self.live_quiz = None
+        self.group_name = None
 
         super().__init__(*args, **kwargs)
 
@@ -34,7 +35,7 @@ class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
         self.quiz_code = self.scope['url_route']['kwargs']['quiz_code']
         socket_user = self.scope['user']
 
-        errors = await self.find_connect_errors(socket_user, self.quiz_code)
+        values, errors = await self.find_connect_errors(socket_user, self.quiz_code)
 
         if errors:
             LOG.warning('Errors encountered when host connected to quiz [%s]:\n%s',
@@ -44,39 +45,47 @@ class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
             await self.close()
             return
 
-        await self.on_successful_connect()
-    
-    async def find_connect_errors(self, _: User, quiz_code: str) -> list[str]:
+        await self.on_successful_connect(values)
+
+    async def find_connect_errors(self, _: User, quiz_code: str) -> tuple[dict, list[str]]:
         '''
-        Performs checks before a socket is allowed to continue connecting. The default is to
-        verify that the quiz exists. If it does, self.live_quiz is set to it.
+        Performs checks before a socket is allowed to continue connecting. The list contain
+        messages of things that went wrong when connecting. The dict contains important values
+        that are required for setup and conveniently access during error checking.
+
+        The default is to verify that the quiz exists. If it does, live_quiz is set to it in the
+        returned dictionary.
 
         Connection should happen if no errors are found (an empty list is returned)
         '''
         try:
-            self.live_quiz = await database_sync_to_async(
+            live_quiz = await database_sync_to_async(
                 lambda code: LiveQuizModel.objects.get(code=quiz_code)
             )(quiz_code)
 
         except LiveQuizModel.DoesNotExist:
-            return ['The specified live quiz does not exist.']
-        
-        return []
-    
-    async def on_successful_connect(self):
+            return {}, ['The specified live quiz does not exist.']
+
+        return {'live_quiz': live_quiz}, []
+
+    async def on_successful_connect(self, values: dict):
         '''
         Only called if no errors were found when calling 'find_connect_errors'. By
-        default, attaches to the live quiz group.
+        default, attaches to the live quiz group. The values dictionary contains any
+        useful values from setup (returned by 'find_connect_errors').
         '''
+        self.quiz_code = values['live_quiz'].code
+        self.group_name = values['live_quiz'].group_name
+
         await self.channel_layer.group_add(
-            self.live_quiz.group_name,
+            self.group_name,
             self.channel_name
         )
-    
+
     async def disconnect(self, code):
-        if self.live_quiz is not None:
+        if self.group_name is not None:
             await self.channel_layer.group_discard(
-                self.live_quiz.group_name,
+                self.group_name,
                 self.channel_name
             )
 
@@ -85,39 +94,39 @@ class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
     async def receive_json(self, content, **kwargs):
         await ClientMessage.handle(self, content, False)
 
+    async def set_view(self, view_data):
+        '''Send the view data to the client.'''
+        await self.send_json(get_current_quiz_view_message(view_data))
+
 
 class LiveQuizHostConsumer(LiveQuizConsumer):
     '''
     Represents the connection to a host who is currently running a live quiz.
     '''
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.user = None
-
     async def receive_json(self, content, **kwargs):
         await ClientMessage.handle(self, content, is_host=True)
 
     async def find_connect_errors(self, user: User, quiz_code: str):
         '''In addition to parent method, checks for authentication and ownership.'''
-        errors = await super().find_connect_errors(user, quiz_code)
+        values, errors = await super().find_connect_errors(user, quiz_code)
 
         if not user.is_authenticated:
             errors.append('Only authenticated users can host a quiz.')
 
         if errors:
-            return errors
+            return values, errors
 
         owner = await database_sync_to_async(
             lambda livequiz: livequiz.quiz.owner
-        )(self.live_quiz)
+        )(values['live_quiz'])
 
         if owner != user:
             errors.append('You are not the owner of the quiz.')
         else:
-            self.user = user
+            values['user'] = user
 
-        return errors
+        return values, errors
 
     async def disconnect(self, code):
         await super().disconnect(code)
@@ -128,13 +137,11 @@ class LiveQuizHostConsumer(LiveQuizConsumer):
 
         return await super().disconnect(code)
 
-    async def on_successful_connect(self):
-        await super().on_successful_connect()
+    async def on_successful_connect(self, values: dict):
+        await super().on_successful_connect(values)
         await self.send_json(get_info_message('Connected successfully.'))
-        await self.send_json(get_current_quiz_view_message(live_quiz=self.live_quiz))
+        await self.set_view(values['live_quiz'].last_view_command)
         LOG.debug('Host successfully connect to quiz %s', self.quiz_code)
-
-        
 
 
 class LiveQuizParticipantConsumer(LiveQuizConsumer):

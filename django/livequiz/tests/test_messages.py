@@ -40,12 +40,12 @@ class TestParentClientMessageClass(TestCase):
         class Tester(module.ClientMessage, message_key='test'):
             def __init__(self, data):
                 pass
-            async def handle_message(self, socket, data: dict) -> None:
+            async def handle_message(self, socket) -> None:
                 pass
         
         with patch.object(Tester, 'handle_message') as mock:
             await module.ClientMessage.handle(None, {'type': 'test', 'payload': None})
-            mock.assert_called_once_with(None, None)
+            mock.assert_called_once_with(None)
     
     async def test_error_thrown_if_non_host_calls_host_message(self):
         dump_socket = 'socket'
