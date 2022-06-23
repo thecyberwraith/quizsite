@@ -43,6 +43,8 @@ export class LiveQuizWebsocket {
             case 'set view':
                 this.renderView(payload);
                 break;
+            case 'info':
+                console.log(payload);
             default:
                 console.error('Unmatched message', type);
             }
