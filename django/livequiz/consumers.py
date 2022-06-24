@@ -1,12 +1,13 @@
 import logging as LOG
 
+from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.contrib.auth.models import User
 
 import livequiz.responses as respond
 from livequiz.messages import ClientMessage
-from livequiz.models import LiveQuizModel
+from livequiz.models import LiveQuizModel, LiveQuizParticipant
 
 
 @database_sync_to_async
@@ -157,6 +158,16 @@ class LiveQuizHostConsumer(LiveQuizConsumer):
 
 class LiveQuizParticipantConsumer(LiveQuizConsumer):
     '''Consumers for participants of quizzes.'''
-    async def look_for_errors(self, user: User, quiz_code: str) -> list[str]:
+    async def on_successful_connect(self, values: dict):
+        await super().on_successful_connect(values)
+
         old_socket = self.scope['session'].get('socketname', None)
         self.scope['session']['socketname'] = self.channel_name
+
+        await sync_to_async(lambda session: session.save())(self.scope['session'])
+
+        await database_sync_to_async(
+            lambda values: LiveQuizParticipant.objects.register_socket(*values)
+        )((values['live_quiz'], self.channel_name, old_socket))
+
+        LOG.info(f'Player connected claiming socket {old_socket} to {self.channel_name}')
