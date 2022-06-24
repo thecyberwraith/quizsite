@@ -54,14 +54,17 @@ class TestLiveQuizModelCreateForQuizMethod(TestCase):
         self.assertEqual(
             model.last_view_command,
             {
-                'view': models.LiveQuizView.QUIZ_BOARD.value,
-                'data': {
-                    'Test': [
-                        {
-                            'id': q_id.id,
-                            'value': 100
-                        }
-                    ]
+                'type': 'set view',
+                'payload': {
+                    'view': models.LiveQuizView.QUIZ_BOARD.value,
+                    'data': {
+                        'Test': [
+                            {
+                                'id': q_id.id,
+                                'value': 100
+                            }
+                        ]
+                    }
                 }
             }
         )
@@ -108,18 +111,21 @@ class TestLiveQuizModelSetViewMethod(TestCase):
         self.assertEqual(
             result,
             {
-                'view': models.LiveQuizView.QUIZ_BOARD.value,
-                'data': {
-                    'Poetry': [{
-                        'id': self.question_ids[0][0],
-                        'value': 100
-                    },
-                        None,
-                    ],
-                    'Math': [{
-                        'id': self.question_ids[1][0],
-                        'value': 100
-                    }]
+                'type': 'set view',
+                'payload': {
+                    'view': models.LiveQuizView.QUIZ_BOARD.value,
+                    'data': {
+                        'Poetry': [{
+                            'id': self.question_ids[0][0],
+                            'value': 100
+                        },
+                            None,
+                        ],
+                        'Math': [{
+                            'id': self.question_ids[1][0],
+                            'value': 100
+                        }]
+                    }
                 }
             }
         )
@@ -133,14 +139,16 @@ class TestLiveQuizModelSetViewMethod(TestCase):
         self.assertEqual(
             result,
             {
-                'view': models.LiveQuizView.QUESTION.value,
-                'data':
-                {
-                    'id': self.question_ids[0][1],
-                    'text': 'Knock?'
+                'type': 'set view',
+                'payload': {
+                    'view': models.LiveQuizView.QUESTION.value,
+                    'data':
+                    {
+                        'id': self.question_ids[0][1],
+                        'text': 'Knock?'
+                    }
                 }
             }
-
         )
 
     def test_set_view_to_answer_result(self):
@@ -152,11 +160,14 @@ class TestLiveQuizModelSetViewMethod(TestCase):
         self.assertEqual(
             result,
             {
-                'view': models.LiveQuizView.ANSWER.value,
-                'data': {
-                    'id': self.question_ids[1][0],
-                    'text': '1+1',
-                    'answer': '2'
+                'type': 'set view',
+                'payload': {
+                    'view': models.LiveQuizView.ANSWER.value,
+                    'data': {
+                        'id': self.question_ids[1][0],
+                        'text': '1+1',
+                        'answer': '2'
+                    }
                 }
             }
         )

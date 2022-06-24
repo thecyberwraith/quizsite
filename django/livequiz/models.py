@@ -1,4 +1,3 @@
-from calendar import c
 from enum import Enum
 from json import dumps, loads
 from string import ascii_uppercase, digits
@@ -11,6 +10,8 @@ from django.db import models, DatabaseError
 
 from quiz.models import QuestionModel, QuizModel
 
+from livequiz.responses import get_current_quiz_view_message
+
 SLUG_SIZE = 8
 ALLOWED_CHARS = ascii_uppercase + digits
 
@@ -18,6 +19,8 @@ UNIQUE_RETRIES = 5
 
 
 def json_property(field_name):
+    '''Creates a property the encodes and decodes the field_name string object into a dict using JSON'''
+
     def get_property(self):
         return loads(getattr(self, field_name))
 
@@ -76,7 +79,7 @@ class LiveQuizManager(models.Manager):
         async_to_sync(get_channel_layer().group_send)(
             livequiz.group_name,
             {
-                type: 'on_live_quiz_terminated'
+                'type': 'quiz.terminated'
             }
         )
         livequiz.delete()
@@ -171,10 +174,8 @@ class LiveQuizModel(models.Model):
             case _:
                 raise Exception(f'Not a valid view from LiveQuizView: {view}')
 
-        self.last_view_command = {
-            'view': view.value,
-            'data': view_data
-        }
+        self.last_view_command = get_current_quiz_view_message(
+            view.value, view_data)
 
         self.save()
 

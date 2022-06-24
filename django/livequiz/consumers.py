@@ -1,13 +1,12 @@
-from enum import Enum
 import logging as LOG
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.contrib.auth.models import User
 
+import livequiz.responses as respond
 from livequiz.messages import ClientMessage
 from livequiz.models import LiveQuizModel
-from livequiz.responses import get_current_quiz_view_message, get_error_message, get_info_message
 
 
 @database_sync_to_async
@@ -41,7 +40,7 @@ class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
             LOG.warning('Errors encountered when host connected to quiz [%s]:\n%s',
                         self.quiz_code,
                         errors)
-            await self.send_json(get_error_message(errors))
+            await self.send_json(respond.get_error_message(errors))
             await self.close()
             return
 
@@ -82,6 +81,9 @@ class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
             self.channel_name
         )
 
+        await self.send_json(respond.get_info_message('Connected successfully.'))
+        await self.send_generic_message({'data': values['live_quiz'].last_view_command})
+
     async def disconnect(self, code):
         if self.group_name is not None:
             await self.channel_layer.group_discard(
@@ -94,9 +96,14 @@ class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
     async def receive_json(self, content, **kwargs):
         await ClientMessage.handle(self, content, False)
 
-    async def set_view(self, view_data):
+    async def send_generic_message(self, event):
         '''Send the view data to the client.'''
-        await self.send_json(get_current_quiz_view_message(view_data))
+        await self.send_json(event['data'])
+
+    async def quiz_terminated(self, _: dict):
+        '''Send the terminate message'''
+        await self.send_json(respond.get_terminate_message())
+        await self.close()
 
 
 class LiveQuizHostConsumer(LiveQuizConsumer):
@@ -139,8 +146,6 @@ class LiveQuizHostConsumer(LiveQuizConsumer):
 
     async def on_successful_connect(self, values: dict):
         await super().on_successful_connect(values)
-        await self.send_json(get_info_message('Connected successfully.'))
-        await self.set_view(values['live_quiz'].last_view_command)
         LOG.debug('Host successfully connect to quiz %s', self.quiz_code)
 
 
