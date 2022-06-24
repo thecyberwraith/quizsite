@@ -8,7 +8,7 @@ from typing import Type
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-from livequiz.models import LiveQuizModel
+from livequiz.models import LiveQuizView, LiveQuizModel
 
 
 class UnexpectedMessageException(Exception):
@@ -86,11 +86,11 @@ class ClientMessage(metaclass=ABCMeta):
         await handler.handle_message(socket)
 
     @abstractmethod
-    async def handle_message(self, socket, data: dict) -> None:
+    async def handle_message(self, socket) -> None:
         '''Attempts to handle the request from the client.'''
 
 
-class SetViewMessage(ClientMessage, message_key='set_view', host_only=True):
+class SetViewMessage(ClientMessage, message_key='set view', host_only=True):
     '''Command to set the view of the quiz.'''
 
     def __init__(self, data):
@@ -101,19 +101,15 @@ class SetViewMessage(ClientMessage, message_key='set_view', host_only=True):
             raise MalformedMessageException(
                 'Expected view and question_id in message.') from error
 
-    async def handle_message(self, socket, data: dict) -> None:
-        new_view_string = database_sync_to_async(
+    async def handle_message(self, socket) -> None:
+        new_view_string = await database_sync_to_async(
             lambda code, view, q_id: LiveQuizModel.objects.get(code=code).set_view(
-                view, q_id
+                LiveQuizView(view), q_id
             ))(socket.quiz_code, self.view_name, self.question_id)
 
-        await socket.channel_layer.group_send(
-            socket.group_name,
-            {
-                'type': 'set_view',
-                'view_data': {
-                    'view': self.view_name,
-                    'data': new_view_string
-                }
-            }
-        )
+        event = {
+            'type': 'send_generic_message',
+            'data': new_view_string
+        }
+        print(event)
+        await socket.channel_layer.group_send(socket.group_name, event)
