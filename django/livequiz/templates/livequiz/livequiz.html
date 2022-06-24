@@ -21,11 +21,17 @@
     </template>
     <template id='connection-refused-template'>
         <div>
-            <h2>Connection Refused</h2>
-            <p>Unfortunately, the server does not think this is the quiz you are looking for. See the messages below.</p>
-            <div id='template-messages'>
-            </div>
+            <h2>Connection Closed</h2>
+            <p>Unfortunately, the server sent an error message back and closed your connection. You can try refreshing the page or resolving the issues below.</p>
+            <ul>
+            </ul>
         </div>
     </template>
-    <div id='livequiz_content_div'><div></div></div>
+    <template id='unknown-error-template'>
+        <div>
+            <h2>Unknown error...</h2>
+            <p>Well, this is awkward. The server disconnected you cleanly without any error or terminate message. Try refreshing?</p>
+        </div>
+    </template>
+    <div id='livequiz_content_div'><div>Please wait while we connect you to your quiz.</div></div>
 {% endblock %}

@@ -9,13 +9,23 @@ export class ClientViewRenderer {
         this.contentDiv.appendChild(new_child);
     }
 
-    renderTemplate(which) {
+    renderTemplate(which, data=null) {
         let template = document.getElementById(which);
         if (!template) {
             console.error('Missing template id', which);
             return;
         }
         this.swapContent(template.content.cloneNode(true));
+
+        switch (which) {
+            case 'connection-refused-template':
+                let ul = this.contentDiv.children[0].querySelector('ul');
+                data.forEach( (line) => {
+                    let li = document.createElement('li');
+                    li.innerHTML = line;
+                    ul.appendChild(li);
+                });
+        }
     }
 
     renderView(payload) {

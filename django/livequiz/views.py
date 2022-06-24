@@ -13,9 +13,12 @@ class ListHostableQuizzesPage(TemplateView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context['host_quizzes'] = QuizModel.get_hosted_quizzes(self.request.user)
-        context['live_quizzes'] = LiveQuizModel.objects.owned_by_user(self.request.user)
+        context['host_quizzes'] = QuizModel.get_hosted_quizzes(
+            self.request.user)
+        context['live_quizzes'] = LiveQuizModel.objects.owned_by_user(
+            self.request.user)
         return context
+
 
 class LaunchRedirect(View):
     '''Performed setup for an authenticated user to launch a game.'''
@@ -48,14 +51,14 @@ class DeleteRedirect(View):
         livequiz_code = request.POST['livequiz_code']
         if not request.user.is_authenticated:
             return return_value
-        
+
         try:
-            livequiz = LiveQuizModel.objects.get(code=livequiz_code)
-            if livequiz.quiz.owner == request.user:
-                livequiz.delete()
+            live_quiz = LiveQuizModel.objects.get(code=livequiz_code)
+            if live_quiz.quiz.owner == request.user:
+                LiveQuizModel.objects.delete(quiz_code=livequiz_code)
         except LiveQuizModel.DoesNotExist:
             pass
-    
+
         return return_value
 
 
@@ -71,6 +74,7 @@ class FixedQuizPage(TemplateView):
         context = super().get_context_data(**kwargs)
         context["quiz_code"] = kwargs['quiz_code']
         return context
+
 
 class HostPage(FixedQuizPage):
     '''The view that the host gets of a live quiz.'''

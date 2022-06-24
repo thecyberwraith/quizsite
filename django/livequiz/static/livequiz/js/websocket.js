@@ -5,6 +5,7 @@ export class LiveQuizWebsocket {
         this.renderer = renderer;
         this.relativeURL = relativeURL;
         this.socket = null;
+        this.lastMessage = null;
         this.establishConnection();
     }
 
@@ -33,6 +34,17 @@ export class LiveQuizWebsocket {
         }
         else {
             console.info('Server intentionally closed connection.');
+            if (this.lastMessage) {
+                if (this.lastMessage.type == 'error') {
+                this.renderer.renderTemplate('connection-refused-template', this.lastMessage.payload)
+                }
+                else if (this.lastMessage.type != 'terminated') {
+                    this.renderer.renderTemplate('unknown-error-template');
+                }
+            }
+            else {
+                this.renderer.renderTemplate('unknown-error-template');
+            }
         }
     }
 
@@ -51,8 +63,13 @@ export class LiveQuizWebsocket {
             case 'error':
                 payload.forEach( line => console.error('Server Error:', line) )
                 break;
+            case 'terminated':
+                console.warn('The quiz has been destroyed!');
+                this.renderer.renderTemplate('terminated-quiz-template');
             default:
                 console.error('Unmatched message', type, e.data);
-            }
+        }
+        this.lastMessage = data;
     }
+
 }

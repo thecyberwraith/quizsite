@@ -111,5 +111,4 @@ class SetViewMessage(ClientMessage, message_key='set view', host_only=True):
             'type': 'send_generic_message',
             'data': new_view_string
         }
-        print(event)
         await socket.channel_layer.group_send(socket.group_name, event)
