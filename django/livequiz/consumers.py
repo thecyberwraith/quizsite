@@ -25,6 +25,7 @@ class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
     def __init__(self, *args, **kwargs):
         self.quiz_code = None
         self.group_name = None
+        self._is_host = False
 
         super().__init__(*args, **kwargs)
 
@@ -94,7 +95,12 @@ class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
         return await super().disconnect(code)
 
     async def receive_json(self, content, **kwargs):
-        await ClientMessage.handle(self, content, False)
+        try:
+            await ClientMessage.handle(self, content, self._is_host)
+        except Exception as error:
+            response = f'Failed to handle message {content}: {error}'
+            LOG.exception(response)
+            await self.send_generic_message({'data': respond.get_error_message([response])})
 
     async def send_generic_message(self, event):
         '''Send the view data to the client.'''
@@ -110,9 +116,9 @@ class LiveQuizHostConsumer(LiveQuizConsumer):
     '''
     Represents the connection to a host who is currently running a live quiz.
     '''
-
-    async def receive_json(self, content, **kwargs):
-        await ClientMessage.handle(self, content, is_host=True)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._is_host = True
 
     async def find_connect_errors(self, user: User, quiz_code: str):
         '''In addition to parent method, checks for authentication and ownership.'''

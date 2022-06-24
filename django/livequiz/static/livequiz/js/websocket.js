@@ -48,8 +48,11 @@ export class LiveQuizWebsocket {
             case 'info':
                 console.log('Server Message:', payload);
                 break;
+            case 'error':
+                payload.forEach( line => console.error('Server Error:', line) )
+                break;
             default:
-                console.error('Unmatched message', type);
+                console.error('Unmatched message', type, e.data);
             }
     }
 }
