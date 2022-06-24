@@ -182,36 +182,43 @@ class LiveQuizModel(models.Model):
         return self.last_view_command
 
 
-class LiveQuizParticipant(models.Model):
-    socket_name = models.CharField(
-        max_length=256,
-        unique=True
-    )
-    name = models.CharField(
-        max_length=128
-    )
-    score = models.IntegerField(
-        default=0
-    )
-    quiz = models.ForeignKey(
-        to=LiveQuizModel,
-        on_delete=models.CASCADE,
-        related_name='participants'
-    )
-
-    @staticmethod
-    def register_participant(quiz_code, name, socket_name, old_socket_name=None):
+class ParticipantManager(models.Manager):
+    '''Fancy participant manipulations.'''
+    def register_socket(self, quiz, new_socket_name, old_socket_name):
         '''
         Called when a participant is added to the game. If they want to reconnect
         to an already existing participant, the old_socket_name must point to an
         already existing participant. Otherwise, the participant is created.
         '''
-        quiz = LiveQuizModel.objects.get(quiz_code=quiz_code)
         LiveQuizParticipant.objects.update_or_create(
+            socket_name=old_socket_name,
             defaults={
-                'name': name,
-                'socket_name': socket_name,
+                'socket_name': new_socket_name,
                 'quiz': quiz
-            },
-            socket_name=old_socket_name
+            }
         )
+
+
+class LiveQuizParticipant(models.Model):
+    '''Someone playing the game!'''
+    objects = ParticipantManager()
+
+    socket_name = models.CharField(
+        max_length=256,
+        unique=True
+    )
+
+    name = models.CharField(
+        max_length=128,
+        default='Anonymous'
+    )
+
+    score = models.IntegerField(
+        default=0
+    )
+    
+    quiz = models.ForeignKey(
+        to=LiveQuizModel,
+        on_delete=models.CASCADE,
+        related_name='participants'
+    )        
