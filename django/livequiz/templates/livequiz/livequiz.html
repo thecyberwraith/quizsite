@@ -7,5 +7,25 @@
 {% endblock %}
 
 {% block content %}
+    <template id='connection-error-template'>
+        <div>
+            <h2>Connection Error</h2>
+            <p>The connection to the server has been unexpectedly closed. The server may be down, but I'll keep trying!</p>
+        </div>
+    </template>
+    <template id='terminated-quiz-template'>
+        <div>
+            <h2>The Live Quiz has ended.</h2>
+            <p>The quiz you were participating in has been closed by the host. You may <a href="{% url 'quiz:select' %}">return to the home page.</a></p>
+        </div>
+    </template>
+    <template id='connection-refused-template'>
+        <div>
+            <h2>Connection Refused</h2>
+            <p>Unfortunately, the server does not think this is the quiz you are looking for. See the messages below.</p>
+            <div id='template-messages'>
+            </div>
+        </div>
+    </template>
     <div id='livequiz_content_div'><div></div></div>
 {% endblock %}

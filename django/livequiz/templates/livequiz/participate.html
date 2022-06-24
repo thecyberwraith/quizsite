@@ -1,63 +1,13 @@
 {% extends "livequiz/livequiz.html" %}
+{% load static %}
 
-{% block title %}Playing game{% endblock %}
+{% block title %}Playing Quiz {{quiz_code}}{% endblock %}
 
 {% block content %}
+{{ block.super }}
+<script type="module">
+    import { setup } from "{% static 'livequiz/js/player.js' %}";
 
-<template id="all-good-template">
-    <div>
-        <p>All's good.</p>
-    </div>
-</template>
-<template id="error-template">
-    <div>
-    <h2>Huh. That's weird.</h2>
-    <p>
-        For some reason, there was a problem with the quiz game with code "{{game_code}}".
-        Did you type it in correctly? 
-
-        I'll keep trying to connect. You can refresh this page and pray it works, or try a different code on the
-        <a href="{% url 'livequiz:join' %}">join page</a>.
-    </p>
-    </div>
-</template>
-
-<div id="game-content">
-    <div></div><!--Leave to avoid error for removing child.-->
-</div>
-
-<script>
-    const contentDiv = document.getElementById('game-content');
-    
-    const websocket_url = 'ws://' + window.location.host + '/ws/live/play/' + '{{game_code}}';
-    games_socket = null;
-    
-    function establish_connection() {
-        if (games_socket !== null) {
-            games_socket.close();
-        }
-
-        games_socket = new WebSocket(websocket_url);
-  
-        games_socket.onmessage = function(e) {
-            console.log('Message', e.data.message);
-        }
-        games_socket.onclose = function(e) {
-            console.warn('Whoops. Socket closed.', e);
-            setContent('error-template');
-            setTimeout(establish_connection, 5);
-        }
-        games_socket.onopen = function(e) {
-            setContent('all-good-template');
-        }
-    }
-
-    function setContent(template_id) {
-        contentDiv.removeChild(contentDiv.children[0]);
-        template = document.getElementById(template_id);
-        contentDiv.appendChild(template.content.cloneNode(true));
-    }
-
-    establish_connection();
+    setup("{{quiz_code}}");
 </script>
 {% endblock %}
