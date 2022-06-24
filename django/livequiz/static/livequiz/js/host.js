@@ -16,8 +16,49 @@ class HostViewRenderer extends ClientViewRenderer {
         element.onclick = (e) => {sendViewRequest('question', question_data.id);};
         return element;
     }
+
+    renderQuestion(question_data) {
+        super.renderQuestion(question_data);
+        let element = this.contentDiv.children[0];
+        let buttons = this.createButtons(['Back', 'Show Answer']);
+        
+        buttons.children[0].onclick = (e) => {sendViewRequest('quiz_board');};
+        buttons.children[1].onclick = (e) => {sendViewRequest('answer', question_data.id);};
+        
+        element.appendChild(buttons);
+    }
+
+    renderAnswer(question_data) {
+        super.renderAnswer(question_data);
+
+        let element = this.contentDiv.children[0];
+
+        let buttons = this.createButtons(['Mark Done']);
+        buttons.children[0].onclick = (e) => {sendViewRequest('quiz_board');};
+        
+        element.appendChild(buttons);
+    }
+
+    createButtons(button_names) {
+        let container = document.createElement('div');
+
+        button_names.forEach( (button_name) => {
+            let button = document.createElement('button');
+            button.innerHTML = button_name;
+            container.appendChild(button);
+        }
+        )
+
+        return container;
+    }
 }
 
 function sendViewRequest(view, question_id=null) {
-    console.log('Setting view to ', view);
+    connection.socket.send(JSON.stringify({
+        type: 'set view',
+        payload: {
+            'view': view,
+            'question_id': question_id
+        }
+    }))
 }
