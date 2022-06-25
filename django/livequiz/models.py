@@ -10,13 +10,68 @@ from django.db import models, DatabaseError
 
 from quiz.models import QuestionModel, QuizModel
 
-from livequiz.responses import get_current_quiz_view_message
+from livequiz.responses import get_buzz_event_message, get_current_quiz_view_message
 
 SLUG_SIZE = 8
 ALLOWED_CHARS = ascii_uppercase + digits
 
 UNIQUE_RETRIES = 5
 
+
+class ParticipantManager(models.Manager):
+    '''Fancy participant manipulations.'''
+    def register_socket(self, quiz, new_socket_name, old_socket_name):
+        '''
+        Called when a participant is added to the game. If they want to reconnect
+        to an already existing participant, the old_socket_name must point to an
+        already existing participant. Otherwise, the participant is created.
+        '''
+        LiveQuizParticipant.objects.update_or_create(
+            socket_name=old_socket_name,
+            defaults={
+                'socket_name': new_socket_name,
+                'quiz': quiz
+            }
+        )
+
+
+class LiveQuizParticipant(models.Model):
+    '''Someone playing the game!'''
+    objects = ParticipantManager()
+
+    socket_name = models.CharField(
+        max_length=256,
+        unique=True
+    )
+
+    name = models.CharField(
+        max_length=128,
+        default='Anonymous'
+    )
+
+    score = models.IntegerField(
+        default=0
+    )
+    
+    quiz = models.ForeignKey(
+        to='LiveQuizModel',
+        on_delete=models.CASCADE,
+        related_name='participants'
+    )
+
+
+class BuzzEvent(models.Model):
+    '''Someone is supposed to be buzzing in!'''
+
+    player = models.ForeignKey(
+        to=LiveQuizParticipant,
+        on_delete=models.SET_NULL,
+        default=None,
+        null=True,
+        related_name='+' # No reference from player
+    )
+
+    start = models.DateTimeField(auto_now_add=True)
 
 def json_property(field_name):
     '''Creates a property the encodes and decodes the field_name string object into a dict using JSON'''
@@ -129,6 +184,12 @@ class LiveQuizModel(models.Model):
         default='{}'
     )
 
+    buzz_event = models.OneToOneField(
+        to=BuzzEvent,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
     player_data = json_property('player_data_raw')
 
     @property
@@ -180,45 +241,3 @@ class LiveQuizModel(models.Model):
         self.save()
 
         return self.last_view_command
-
-
-class ParticipantManager(models.Manager):
-    '''Fancy participant manipulations.'''
-    def register_socket(self, quiz, new_socket_name, old_socket_name):
-        '''
-        Called when a participant is added to the game. If they want to reconnect
-        to an already existing participant, the old_socket_name must point to an
-        already existing participant. Otherwise, the participant is created.
-        '''
-        LiveQuizParticipant.objects.update_or_create(
-            socket_name=old_socket_name,
-            defaults={
-                'socket_name': new_socket_name,
-                'quiz': quiz
-            }
-        )
-
-
-class LiveQuizParticipant(models.Model):
-    '''Someone playing the game!'''
-    objects = ParticipantManager()
-
-    socket_name = models.CharField(
-        max_length=256,
-        unique=True
-    )
-
-    name = models.CharField(
-        max_length=128,
-        default='Anonymous'
-    )
-
-    score = models.IntegerField(
-        default=0
-    )
-    
-    quiz = models.ForeignKey(
-        to=LiveQuizModel,
-        on_delete=models.CASCADE,
-        related_name='participants'
-    )        

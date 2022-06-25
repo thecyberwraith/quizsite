@@ -1,12 +1,16 @@
 export class ClientViewRenderer {
     constructor() {
         this.contentDiv = document.getElementById('livequiz_content_div');
-
+        this.buzzDiv = document.getElementById('livequiz_buzz_div')
     }
 
-    swapContent(new_child) {
-        this.contentDiv.children[0].remove();
-        this.contentDiv.appendChild(new_child);
+    swapContent(new_child, parent) {
+        parent.children[0].remove();
+        parent.appendChild(new_child);
+    }
+
+    renderBuzzArea(data) {
+        console.log('Whoops, someone forgot to implement renderBuzzArea.');
     }
 
     renderTemplate(which, data=null) {
@@ -15,7 +19,7 @@ export class ClientViewRenderer {
             console.error('Missing template id', which);
             return;
         }
-        this.swapContent(template.content.cloneNode(true));
+        this.swapContent(template.content.cloneNode(true), this.contentDiv);
 
         switch (which) {
             case 'connection-refused-template':
@@ -69,7 +73,7 @@ export class ClientViewRenderer {
             board.appendChild(category_div);
         }, this)
     
-        this.swapContent(board);
+        this.swapContent(board, this.contentDiv);
     }
 
     renderBoardQuestion(question_data) {
@@ -84,7 +88,7 @@ export class ClientViewRenderer {
         question.innerHTML = question_data.text;
         element.appendChild(question);
 
-        this.swapContent(element);
+        this.swapContent(element, this.contentDiv);
     }
 
     renderAnswer(question_data) {
@@ -97,6 +101,6 @@ export class ClientViewRenderer {
         answer.innerHTML = question_data.answer;
         element.appendChild(answer);
         
-        this.swapContent(element);
+        this.swapContent(element, this.contentDiv);
     }
 }

@@ -3,12 +3,14 @@ Handles messages from the client to the server.
 '''
 
 from abc import ABCMeta, abstractmethod
+from enum import Flag, auto
 from typing import Type
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-from livequiz.models import LiveQuizView, LiveQuizModel
+from livequiz.models import BuzzEvent, LiveQuizView, LiveQuizModel
+import livequiz.responses as respond
 
 
 class UnexpectedMessageException(Exception):
@@ -19,11 +21,26 @@ class UnexpectedMessageException(Exception):
             f'Unexpected message type {msg_type} encountered.', *args)
 
 
-class HostOnlyException(Exception):
-    '''Thrown when a non-host attempts to send a host only message.'''
+class AuthorizationOptions(Flag):
+    '''Represents which types of clients can be accepted.'''
+    HOST = auto()
+    PLAYER = auto()
+    ANY = HOST | PLAYER
 
-    def __init__(self, *args: object) -> None:
-        super().__init__('Cannot use this message type: reserved for hosts only.')
+    @staticmethod
+    def from_is_host_boolean(is_host):
+        if is_host:
+            return AuthorizationOptions.HOST
+
+        return AuthorizationOptions.PLAYER
+
+
+class AuthorizationException(Exception):
+    '''Thrown when an unauthorized socket tries to access a message handler.'''
+
+    def __init__(self, socket_auth, message_auth, *args: object) -> None:
+        super().__init__(
+            f'Socket is authorized for {socket_auth}, not for {message_auth}')
 
 
 class MalformedMessageException(Exception):
@@ -43,7 +60,7 @@ class ClientMessage(metaclass=ABCMeta):
             raise KeyError(
                 'ClientMessage subclass forgot to set "message_key"') from exception
 
-        host_only = kwargs.pop('host_only', False)
+        authorization = kwargs.pop('authorization', AuthorizationOptions.ANY)
 
         registry = ClientMessage._registered_handlers
 
@@ -51,7 +68,7 @@ class ClientMessage(metaclass=ABCMeta):
             raise KeyError(
                 f'ClientMessage subclass message_key clash: {cls} and {registry[key]}')
 
-        registry[key] = (host_only, cls)
+        registry[key] = (authorization, cls)
 
         super().__init_subclass__(**kwargs)
 
@@ -61,10 +78,13 @@ class ClientMessage(metaclass=ABCMeta):
         if not msg_type in ClientMessage._registered_handlers:
             raise UnexpectedMessageException(msg_type)
 
-        host_only, klass = ClientMessage._registered_handlers[msg_type]
-
-        if host_only and not is_host:
-            raise HostOnlyException()
+        authorization, klass = ClientMessage._registered_handlers[msg_type]
+        socket_auth = AuthorizationOptions.from_is_host_boolean(is_host)
+        if not (socket_auth & authorization):
+            raise AuthorizationException(
+                socket_auth=socket_auth,
+                message_auth=authorization
+            )
 
         return klass
 
@@ -90,7 +110,10 @@ class ClientMessage(metaclass=ABCMeta):
         '''Attempts to handle the request from the client.'''
 
 
-class SetViewMessage(ClientMessage, message_key='set view', host_only=True):
+class SetViewMessage(
+        ClientMessage,
+        message_key='set view',
+        authorization=AuthorizationOptions.HOST):
     '''Command to set the view of the quiz.'''
 
     def __init__(self, data):
@@ -112,3 +135,69 @@ class SetViewMessage(ClientMessage, message_key='set view', host_only=True):
             'data': new_view_string
         }
         await socket.channel_layer.group_send(socket.group_name, event)
+
+
+class ManageBuzzMessage(
+        ClientMessage,
+        message_key='manage buzz',
+        authorization=AuthorizationOptions.HOST):
+    '''When a buzz starts or stops.'''
+
+    def __init__(self, data):
+        try:
+            self.action = data['action']
+            if not self.action in ['start', 'end']:
+                raise KeyError('Action must be either "start" or "end"')
+        except Exception as error:
+            raise MalformedMessageException(
+                'Problem getting manage buzz action.'
+            ) from error
+
+    async def handle_message(self, socket) -> None:
+        match self.action:
+            case 'start':
+                await self.start_buzz_event(socket)
+            case 'end':
+                await self.end_buzz_event(socket)
+
+    async def start_buzz_event(self, socket):
+        '''Start a new buzz and delete the old.'''
+        def refresh_buzz_event(quiz_code):
+            quiz = LiveQuizModel.objects.get(code=quiz_code)
+
+            if quiz.buzz_event:
+                quiz.buzz_event.delete()
+
+            quiz.buzz_event = BuzzEvent.objects.create()
+            quiz.save()
+            return quiz.buzz_event
+
+        event = await database_sync_to_async(refresh_buzz_event)(socket.quiz_code)
+
+        await socket.channel_layer.group_send(
+            socket.group_name,
+            {
+                'type': 'send.generic.message',
+                'data': respond.get_buzz_event_message(event)
+            }
+        )
+
+    async def end_buzz_event(self, socket):
+        '''End whatever buzzing was happening.'''
+        def delete_buzz_event(quiz_code):
+            quiz = LiveQuizModel.objects.get(code=quiz_code)
+
+            if quiz.buzz_event:
+                quiz.buzz_event.delete()
+            quiz.buzz_event = None
+            quiz.save()
+
+        await database_sync_to_async(delete_buzz_event)(socket.quiz_code)
+
+        await socket.channel_layer.group_send(
+            socket.group_name,
+            {
+                'type': 'send.generic.message',
+                'data': respond.get_buzz_event_message(None)
+            }
+        )

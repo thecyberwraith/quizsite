@@ -57,6 +57,9 @@ export class LiveQuizWebsocket {
             case 'set view':
                 this.renderer.renderView(payload);
                 break;
+            case 'buzz event':
+                this.renderer.renderBuzzArea(payload);
+                break;
             case 'info':
                 console.log('Server Message:', payload);
                 break;

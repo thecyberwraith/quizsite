@@ -50,17 +50,17 @@ class TestParentClientMessageClass(TestCase):
     async def test_error_thrown_if_non_host_calls_host_message(self):
         dump_socket = 'socket'
         
-        class HostOnly(module.ClientMessage, message_key='hack', host_only=True):
+        class HostOnly(module.ClientMessage, message_key='hack', authorization=module.AuthorizationOptions.HOST):
             async def handle_message(self, socket, data: dict) -> None:
                 pass
         
-        with self.assertRaises(module.HostOnlyException):
+        with self.assertRaises(module.AuthorizationException):
             await module.ClientMessage.handle(dump_socket, {'type': 'hack', 'payload': None})
     
     async def test_host_only_handled_by_host(self):
         dump_socket = 'socket'
 
-        class HostOnly(module.ClientMessage, message_key='hackmore', host_only=True):
+        class HostOnly(module.ClientMessage, message_key='hackmore', authorization=module.AuthorizationOptions.HOST):
             def __init__(self, data):
                 pass
             async def handle_message(self, socket, data: dict) -> None:
