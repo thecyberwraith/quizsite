@@ -9,7 +9,7 @@ from typing import Type
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-from livequiz.models import BuzzEvent, LiveQuizView, LiveQuizModel
+from livequiz.models import BuzzEvent, LiveQuizParticipant, LiveQuizView, LiveQuizModel
 import livequiz.responses as respond
 
 
@@ -170,15 +170,14 @@ class ManageBuzzMessage(
 
             quiz.buzz_event = BuzzEvent.objects.create()
             quiz.save()
-            return quiz.buzz_event
 
-        event = await database_sync_to_async(refresh_buzz_event)(socket.quiz_code)
+        await database_sync_to_async(refresh_buzz_event)(socket.quiz_code)
 
         await socket.channel_layer.group_send(
             socket.group_name,
             {
                 'type': 'send.generic.message',
-                'data': respond.get_buzz_event_message(event)
+                'data': respond.get_buzz_event_message(True)
             }
         )
 
@@ -198,6 +197,44 @@ class ManageBuzzMessage(
             socket.group_name,
             {
                 'type': 'send.generic.message',
-                'data': respond.get_buzz_event_message(None)
+                'data': respond.get_buzz_event_message(False)
             }
         )
+
+
+class BuzzInMessage(
+        ClientMessage,
+        message_key='buzz in',
+        authorization=AuthorizationOptions.PLAYER):
+    '''A player tries to buzz in!'''
+
+    def __init__(self, data) -> None:
+        pass
+
+    async def handle_message(self, socket) -> None:
+        @database_sync_to_async
+        def attempt_buzz_update(quiz_code, socket_name):
+            quiz = LiveQuizModel.objects.get(code=quiz_code)
+            if not quiz.buzz_event or quiz.buzz_event.player:
+                return False, None
+
+            player = LiveQuizParticipant.objects.get(socket_name=socket_name)
+            quiz.buzz_event.player = player
+            quiz.buzz_event.save()
+
+            return True, player.name
+
+        buzzed_in, name = await attempt_buzz_update(socket.quiz_code, socket.channel_name)
+
+        if buzzed_in:
+            await socket.channel_layer.group_send(
+                socket.group_name,
+                {
+                    'type': 'send.generic.message',
+                    'data': respond.get_buzz_event_message(
+                        True,
+                        socket.channel_name,
+                        name
+                    )
+                }
+            )

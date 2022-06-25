@@ -66,9 +66,9 @@ def get_terminate_message():
     )
 
 
-def get_buzz_event_message(buzz_event, player_socket=None, player_name=None):
+def get_buzz_event_message(exists: bool, player_socket=None, player_name=None):
     '''Either respond none, open, closed with appropriate info for closed.'''
-    if buzz_event is None:
+    if not exists:
         payload = {
             'status': 'none'
         }
