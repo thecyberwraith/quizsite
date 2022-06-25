@@ -1,0 +1,5 @@
+#livequiz_player_div > div {
+    background-color: darkblue;
+    display: flex;
+    flex-direction: row;
+}
