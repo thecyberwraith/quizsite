@@ -60,6 +60,9 @@ export class LiveQuizWebsocket {
             case 'buzz event':
                 this.renderer.renderBuzzArea(payload);
                 break;
+            case 'player update':
+                this.renderer.renderPlayerInfo(payload);
+                break;
             case 'info':
                 console.log('Server Message:', payload);
                 break;

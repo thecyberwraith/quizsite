@@ -26,13 +26,15 @@ class ParticipantManager(models.Manager):
         to an already existing participant, the old_socket_name must point to an
         already existing participant. Otherwise, the participant is created.
         '''
-        LiveQuizParticipant.objects.update_or_create(
+        obj, _ = LiveQuizParticipant.objects.update_or_create(
             socket_name=old_socket_name,
             defaults={
                 'socket_name': new_socket_name,
                 'quiz': quiz
             }
         )
+
+        return obj
 
 
 class LiveQuizParticipant(models.Model):

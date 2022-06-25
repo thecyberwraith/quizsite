@@ -84,6 +84,7 @@ class TestGenericLiveQuizConsumer(LiveQuizConsumerTestCase):
         await self.connect_with_code(quiz_code)
         await self.communicator.receive_json_from()  # Connect successfully
         await self.communicator.receive_json_from()  # Set the view
+        await self.communicator.receive_json_from()  # Update buzz event
 
         await database_sync_to_async(
             lambda code: LiveQuizModel.objects.delete(quiz_code=code)

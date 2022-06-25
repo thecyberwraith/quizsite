@@ -238,3 +238,27 @@ class BuzzInMessage(
                     )
                 }
             )
+
+
+class UpdatePlayerName(
+        ClientMessage,
+        message_key='set player name',
+        authorization=AuthorizationOptions.PLAYER):
+    '''I do not want to be anonymous'''
+
+    def __init__(self, data):
+        try:
+            self.new_name = data['name']
+        except Exception as error:
+            raise MalformedMessageException(
+                'Expected a name to be provided.') from error
+
+    async def handle_message(self, socket) -> None:
+        @database_sync_to_async
+        def update_name(socket_name, new_name):
+            LiveQuizParticipant.objects.filter(
+                socket_name=socket_name).update(name=new_name)
+
+        await update_name(socket.channel_name, self.new_name)
+
+        await socket.send_json(respond.get_player_update_message(socket.channel_name, self.new_name))

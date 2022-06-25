@@ -13,6 +13,10 @@ export class ClientViewRenderer {
         console.log('Whoops, someone forgot to implement renderBuzzArea.');
     }
 
+    renderPlayerInfo(data) {
+        console.log('Setting info', data);
+    }
+
     renderTemplate(which, data=null) {
         let template = document.getElementById(which);
         if (!template) {

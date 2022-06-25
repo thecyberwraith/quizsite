@@ -11,6 +11,29 @@ export function setup(quiz_code) {
 
 
 class PlayerRenderer extends ClientViewRenderer {
+    constructor() {
+        super()
+        this.playerDiv = document.getElementById('livequiz_player_div');
+    }
+
+    renderPlayerInfo(data) {
+        console.log('New player info:', data);
+        let newDiv = document.createElement('div');
+        let p = document.createElement('p');
+        p.innerHTML = `Playing as "${data.name}"`;
+        newDiv.appendChild(p);
+
+        let button = document.createElement('button');
+        button.onclick = (e) => {
+            let new_name = prompt('What is your name?', data.name);
+            sendPlayerUpdateRequest(new_name);
+        }
+        button.innerHTML = 'Change Name';
+
+        newDiv.appendChild(button);
+
+        this.swapContent(newDiv, this.playerDiv);
+    }
     renderBuzzArea(data) {
         let newDiv = document.createElement('div')
 
@@ -36,5 +59,14 @@ function sendBuzzInEvent() {
     connection.socket.send(JSON.stringify({
         type: 'buzz in',
         payload: {}
+    }))
+}
+
+function sendPlayerUpdateRequest(new_name) {
+    connection.socket.send(JSON.stringify({
+        type: 'set player name',
+        payload: {
+            name: new_name
+        }
     }))
 }

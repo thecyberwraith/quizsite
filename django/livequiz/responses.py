@@ -12,6 +12,7 @@ class MessageTypes(Enum):
     SET_VIEW = 'set view'
     TERMINATE = 'terminated'
     BUZZ = 'buzz event'
+    PLAYER_UPDATE = 'player update'
 
 
 def get_generic_message(msg_type: MessageTypes, payload: object):
@@ -86,4 +87,11 @@ def get_buzz_event_message(exists: bool, player_socket=None, player_name=None):
     return get_generic_message(
         MessageTypes.BUZZ,
         payload
+    )
+
+def get_player_update_message(socket_name, new_name):
+    '''Just tell them the new name.'''
+    return get_generic_message(
+        MessageTypes.PLAYER_UPDATE,
+        {'name': new_name, 'socket': socket_name}
     )

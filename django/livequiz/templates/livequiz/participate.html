@@ -4,6 +4,7 @@
 {% block title %}Playing Quiz {{quiz_code}}{% endblock %}
 
 {% block content %}
+<div id='livequiz_player_div'><p>Waiting on server to set name...</p></div>
 {{ block.super }}
 <script type="module">
     import { setup } from "{% static 'livequiz/js/player.js' %}";
