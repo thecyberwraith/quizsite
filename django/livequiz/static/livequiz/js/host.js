@@ -52,7 +52,7 @@ class HostViewRenderer extends ClientViewRenderer {
         let element = this.contentDiv.children[0];
 
         let buttons = this.createButtons(['Mark Done']);
-        buttons.children[0].onclick = (e) => {sendViewRequest('quiz_board');};
+        buttons.children[0].onclick = (e) => {sendMarkDoneRequest(question_data.id);};
         
         element.appendChild(buttons);
     }
@@ -86,6 +86,15 @@ function sendBuzzRequest(action) {
         type: 'manage buzz',
         payload: {
             'action': action
+        }
+    }));
+}
+
+function sendMarkDoneRequest(question_id) {
+    connection.socket.send(JSON.stringify({
+        type: 'mark answered',
+        payload: {
+            'question_id': question_id
         }
     }));
 }

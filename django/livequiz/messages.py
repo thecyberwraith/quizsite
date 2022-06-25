@@ -262,3 +262,33 @@ class UpdatePlayerName(
         await update_name(socket.channel_name, self.new_name)
 
         await socket.send_json(respond.get_player_update_message(socket.channel_name, self.new_name))
+
+
+class MarkQuestionAnswered(
+        ClientMessage,
+        message_key='mark answered',
+        authorization=AuthorizationOptions.HOST):
+    '''Removes question from being seen again.'''
+    def __init__(self, data) -> None:
+        try:
+            self.question_id = int(data['question_id'])
+        except Exception as error:
+            raise MalformedMessageException(
+                'Expected a question id in message.') from error
+
+    async def handle_message(self, socket) -> None:
+        @database_sync_to_async
+        def mark_question_done(quiz_code, question_id):
+            quiz = LiveQuizModel.objects.get(code=quiz_code)
+            quiz.answered_questions += [question_id]
+            return quiz.set_view(LiveQuizView.QUIZ_BOARD)
+
+        message = await mark_question_done(socket.quiz_code, self.question_id)
+
+        await socket.channel_layer.group_send(
+            socket.group_name,
+            {
+                'type': 'send.generic.message',
+                'data': message
+            }
+        )

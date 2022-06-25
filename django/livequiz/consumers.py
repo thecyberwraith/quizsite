@@ -92,9 +92,9 @@ class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
             name, socket = None, None
             if event and event.player:
                 name, socket = event.player.name, event.player.socket_name
-            
+
             return event, name, socket
-        
+
         event, name, socket = await get_buzz_info(values['live_quiz'])
         await self.send_generic_message({'data': respond.get_buzz_event_message(event, socket, name)})
 
@@ -129,6 +129,7 @@ class LiveQuizHostConsumer(LiveQuizConsumer):
     '''
     Represents the connection to a host who is currently running a live quiz.
     '''
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._is_host = True
@@ -180,11 +181,13 @@ class LiveQuizParticipantConsumer(LiveQuizConsumer):
 
         @database_sync_to_async
         def get_player_info(quiz, new_name, old_name):
-            player = LiveQuizParticipant.objects.register_socket(quiz, new_name, old_name)
+            player = LiveQuizParticipant.objects.register_socket(
+                quiz, new_name, old_name)
             return player.name
 
         name = await get_player_info(values['live_quiz'], self.channel_name, old_socket)
 
-        LOG.info(f'Player connected claiming socket {old_socket} to {self.channel_name}')
+        LOG.info(
+            f'Player connected claiming socket {old_socket} to {self.channel_name}')
 
         await self.send_generic_message({'data': respond.get_player_update_message(self.channel_name, name)})
