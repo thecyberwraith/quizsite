@@ -14,16 +14,8 @@ from livequiz.consumers import LiveQuizConsumer, LiveQuizHostConsumer
 from livequiz.models import LiveQuizModel
 
 
-def asyncSelfManage(func):
-    async def testFunc(s, *args, **kwargs):
-        await s.asyncSetUp()
-        await func(s, *args, **kwargs)
-        await s.asyncTearDown()
-    return testFunc
-
-
 class LiveQuizConsumerTestCase(TestCase):
-    async def asyncSetUp(self):
+    def setUp(self):
         self.application = AuthMiddlewareStack(URLRouter([
             re_path(r'^testws/(?P<quiz_code>\w+)/$',
                     LiveQuizConsumer.as_asgi())
@@ -41,8 +33,8 @@ class LiveQuizConsumerTestCase(TestCase):
         )
         await self.communicator.connect()
 
-    async def asyncTearDown(self):
-        await self.communicator.disconnect()
+    def tearDown(self):
+        async_to_sync(self.communicator.disconnect)()
 
     async def assertMessageType(self, msg_type: str):
         msg = await self.communicator.receive_json_from()
@@ -54,13 +46,20 @@ class LiveQuizConsumerTestCase(TestCase):
 
 
 class TestGenericLiveQuizConsumer(LiveQuizConsumerTestCase):
-    @asyncSelfManage
+    def setUp(self):
+        self.application = AuthMiddlewareStack(URLRouter([
+            re_path(r'^testws/(?P<quiz_code>\w+)/$',
+                    LiveQuizConsumer.as_asgi())
+        ]))
+    
+    def tearDown(self):
+        async_to_sync(self.communicator.disconnect)()
+    
     async def test_requires_livequiz_exists(self):
         await self.connect_with_code()
 
         await self.assertMessageType('error')
 
-    @asyncSelfManage
     async def test_success_when_quiz_exists(self):
         quiz_code = await self.add_quiz_info()
 
@@ -68,7 +67,6 @@ class TestGenericLiveQuizConsumer(LiveQuizConsumerTestCase):
 
         await self.assertMessageType('info')
 
-    @asyncSelfManage
     async def test_success_sends_current_view(self):
         quiz_code = await self.add_quiz_info()
 
@@ -77,7 +75,6 @@ class TestGenericLiveQuizConsumer(LiveQuizConsumerTestCase):
         await self.assertMessageType('info')
         await self.assertMessageType('set view')
 
-    @asyncSelfManage
     async def test_sends_terminate_when_quiz_killed(self):
         quiz_code = await self.add_quiz_info()
 
@@ -94,7 +91,7 @@ class TestGenericLiveQuizConsumer(LiveQuizConsumerTestCase):
 
 
 class TestHostConsumer(LiveQuizConsumerTestCase):
-    async def asyncSetUp(self):
+    def setUp(self):
         self.application = AuthMiddlewareStack(URLRouter([
             re_path(r'^testws/(?P<quiz_code>\w+)/$',
                     LiveQuizHostConsumer.as_asgi())
@@ -117,12 +114,10 @@ class TestHostConsumer(LiveQuizConsumerTestCase):
 
         LiveQuizHostConsumer.connect = org_func
 
-    @asyncSelfManage
     async def test_requires_authentication(self):
         await self.connect_with_code()
         await self.assertMessageType('error')
 
-    @asyncSelfManage
     async def test_requires_quiz_ownership(self):
         user = await self.add_user_info()
         code = await self.add_quiz_info()
@@ -130,7 +125,6 @@ class TestHostConsumer(LiveQuizConsumerTestCase):
 
         await self.assertMessageType('error')
 
-    @asyncSelfManage
     async def test_accepts_quiz_owned_by_user(self):
         user = await self.add_user_info()
         quiz_code = await self.add_quiz_info(user)
