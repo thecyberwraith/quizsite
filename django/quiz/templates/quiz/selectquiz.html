@@ -18,7 +18,7 @@
 			</a>]
 		{% endif %}
 		{% if quiz in host_quizzes %}
-			[<form action="{% url 'quiz:launchlive' %}" method="post"><input type="hidden" name="quiz_id" value="{{ quiz.id }}"><input type="submit" value="Start Live Quiz"></form>]
+			[<form action="{% url 'quiz:launchlive' %}" method="post">{% csrf_token %}<input type="hidden" name="quiz_id" value="{{ quiz.id }}"><input type="submit" value="Start Live Quiz"></form>]
 		{% endif %}
 	</p>
 {% empty %}
