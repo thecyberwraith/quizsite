@@ -11,10 +11,10 @@ from livequiz.models import LiveQuizModel, LiveQuizParticipant
 
 
 @database_sync_to_async
-def get_quiz_and_owner(quiz_code):
+def get_quiz_and_host(code):
     '''Synchronously get the live quiz and its owner from the database.'''
-    livequiz = LiveQuizModel.objects.get(code=quiz_code)
-    return livequiz, livequiz.quiz.owner
+    livequiz = LiveQuizModel.objects.get(code=code)
+    return livequiz, livequiz.host
 
 
 class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
@@ -24,7 +24,7 @@ class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
     '''
 
     def __init__(self, *args, **kwargs):
-        self.quiz_code = None
+        self.code = None
         self.group_name = None
         self._is_host = False
 
@@ -33,14 +33,14 @@ class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         await self.accept()
 
-        self.quiz_code = self.scope['url_route']['kwargs']['quiz_code']
+        self.code = self.scope['url_route']['kwargs']['quiz_code']
         socket_user = self.scope['user']
 
-        values, errors = await self.find_connect_errors(socket_user, self.quiz_code)
+        values, errors = await self.find_connect_errors(socket_user, self.code)
 
         if errors:
             LOG.warning('Errors encountered when host connected to quiz [%s]:\n%s',
-                        self.quiz_code,
+                        self.code,
                         errors)
             await self.send_json(respond.get_error_message(errors))
             await self.close()
@@ -75,7 +75,7 @@ class LiveQuizConsumer(AsyncJsonWebsocketConsumer):
         default, attaches to the live quiz group. The values dictionary contains any
         useful values from setup (returned by 'find_connect_errors').
         '''
-        self.quiz_code = values['live_quiz'].code
+        self.code = values['live_quiz'].code
         self.group_name = values['live_quiz'].group_name
 
         await self.channel_layer.group_add(
@@ -145,7 +145,7 @@ class LiveQuizHostConsumer(LiveQuizConsumer):
             return values, errors
 
         owner = await database_sync_to_async(
-            lambda livequiz: livequiz.quiz.owner
+            lambda livequiz: livequiz.host
         )(values['live_quiz'])
 
         if owner != user:
@@ -159,14 +159,14 @@ class LiveQuizHostConsumer(LiveQuizConsumer):
         await super().disconnect(code)
 
         LOG.info('Host disconnecting from live quiz %s with code %s',
-                 self.quiz_code,
+                 self.code,
                  code)
 
         return await super().disconnect(code)
 
     async def on_successful_connect(self, values: dict):
         await super().on_successful_connect(values)
-        LOG.debug('Host successfully connect to quiz %s', self.quiz_code)
+        LOG.debug('Host successfully connect to quiz %s', self.code)
 
 
 class LiveQuizParticipantConsumer(LiveQuizConsumer):

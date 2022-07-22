@@ -2,30 +2,15 @@
 
 {% block content %}
 {% if user.is_authenticated %}
-	<p>Host a quiz below.</p>
-
-	{% for quiz in host_quizzes %}
-		<div>
-			<p>{{ quiz.name }}<p>
-			<form action="{% url 'livequiz:launch' %}" method="post">
-				{% csrf_token %}
-				<input type='hidden' name='quiz_id' value='{{ quiz.id }}'>
-				<input type='submit' value='Launch New'>
-			</form>
-		</div>
-	{% empty %}
-		No quizzes are available to host.
-	{% endfor %}
-
 	<p>Active Live Quizzes</p>
 
 	{% for quiz in live_quizzes %}
 		<div>
-			<p>{{ quiz.quiz.name }} ({{quiz.code}})</p>
+			<p>{{ quiz.name }} ({{quiz.code}})</p>
 			[<a href="{% url 'livequiz:host' quiz.code %}">Continue</a>]
 			<form action="{% url 'livequiz:delete' %}" method="post">
 				{% csrf_token %}
-				<input type="hidden" name='livequiz_code' value={{ quiz.code }}>
+				<input type="hidden" name="livequiz_code" value="{{ quiz.code }}">
 				<input type="submit" value="Delete">
 			</form>
 	{% empty %}
@@ -33,6 +18,6 @@
 	{% endfor %}
 
 {% else %}
-	You are not logged in.
+	You must be logged in to manage live quizzes.
 {% endif %}
 {% endblock %}

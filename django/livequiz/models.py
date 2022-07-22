@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum
 from json import dumps, loads
 from string import ascii_uppercase, digits
@@ -7,10 +8,10 @@ from channels.layers import get_channel_layer
 from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
 from django.db import models, DatabaseError
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
-from quiz.models import QuestionModel, QuizModel
-
-from livequiz.responses import get_buzz_event_message, get_current_quiz_view_message
+from livequiz.responses import get_current_quiz_view_message
 
 SLUG_SIZE = 8
 ALLOWED_CHARS = ascii_uppercase + digits
@@ -18,8 +19,20 @@ ALLOWED_CHARS = ascii_uppercase + digits
 UNIQUE_RETRIES = 5
 
 
+@dataclass
+class QuizData:
+    '''
+    A representation of data for a live quiz. Each category has
+    a name that maps to a tuple of questions. Each question provides
+    a point value, a question string, and an answer string.
+    '''
+    name: str
+    categories: dict[str, tuple[tuple[int, str, str]]]
+
+
 class ParticipantManager(models.Manager):
     '''Fancy participant manipulations.'''
+
     def register_socket(self, quiz, new_socket_name, old_socket_name):
         '''
         Called when a participant is added to the game. If they want to reconnect
@@ -54,7 +67,7 @@ class LiveQuizParticipant(models.Model):
     score = models.IntegerField(
         default=0
     )
-    
+
     quiz = models.ForeignKey(
         to='LiveQuizModel',
         on_delete=models.CASCADE,
@@ -70,10 +83,11 @@ class BuzzEvent(models.Model):
         on_delete=models.SET_NULL,
         default=None,
         null=True,
-        related_name='+' # No reference from player
+        related_name='+'  # No reference from player
     )
 
     start = models.DateTimeField(auto_now_add=True)
+
 
 def json_property(field_name):
     '''Creates a property the encodes and decodes the field_name string object into a dict using JSON'''
@@ -103,21 +117,28 @@ class LiveQuizView(Enum):
 
 
 class LiveQuizManager(models.Manager):
-    def create_for_quiz(self, quiz_id: int):
+    '''Interface for Live Quiz specific management.'''
+    def create_for_quiz(self, host, quiz_data: QuizData):
         '''Creates a live quiz for this particular quiz, and generates a unique code.'''
-        quiz = QuizModel.objects.get(id=quiz_id)
         code = generate_random_slug()
         for _ in range(UNIQUE_RETRIES):
             try:
                 self.get(code=code)
                 code = generate_random_slug()
             except LiveQuizModel.DoesNotExist:
-                model = LiveQuizModel.objects.create(
-                    code=code,
-                    quiz=quiz
-                )
-                model.set_view(LiveQuizView.QUIZ_BOARD)
-                return model
+                quiz = LiveQuizModel.objects.create(code=code, host=host, name=quiz_data.name)
+                for category_name in quiz_data.categories:
+                    category = quiz.categories.create(name=category_name)
+
+                    for value, question, answer in quiz_data.categories[category_name]:
+                        category.questions.create(
+                            value=value,
+                            question=question,
+                            answer=answer
+                        )
+                quiz.set_view(LiveQuizView.QUIZ_BOARD)
+                quiz.save()
+                return quiz
 
         raise DatabaseError(
             f'Failed to create unique code for LiveQuiz within {UNIQUE_RETRIES} tries.'
@@ -128,18 +149,7 @@ class LiveQuizManager(models.Manager):
         if not user.is_authenticated:
             return []
 
-        return self.filter(quiz__owner=user)
-
-    def delete(self, quiz_code: str):
-        '''Sends a signal to the quizzes channel group that this quiz has been deleted.'''
-        livequiz = self.get(code=quiz_code)
-        async_to_sync(get_channel_layer().group_send)(
-            livequiz.group_name,
-            {
-                'type': 'quiz.terminated'
-            }
-        )
-        livequiz.delete()
+        return self.filter(host=user)
 
 
 class LiveQuizModel(models.Model):
@@ -157,10 +167,14 @@ class LiveQuizModel(models.Model):
         primary_key=True
     )
 
-    quiz = models.ForeignKey(
-        to=QuizModel,
+    name = models.CharField(
+        max_length=256
+    )
+
+    host = models.ForeignKey(
+        to=User,
         on_delete=models.CASCADE,
-        null=False
+        related_name='+'
     )
 
     start_time = models.DateTimeField(
@@ -182,17 +196,17 @@ class LiveQuizModel(models.Model):
     answered_questions = json_property('answered_questions_raw')
 
     player_data_raw = models.CharField(
-        max_length=512,
+        max_length=2048,
         default='{}'
     )
+
+    player_data = json_property('player_data_raw')
 
     buzz_event = models.OneToOneField(
         to=BuzzEvent,
         on_delete=models.SET_NULL,
         null=True
     )
-
-    player_data = json_property('player_data_raw')
 
     @property
     def group_name(self):
@@ -209,7 +223,7 @@ class LiveQuizModel(models.Model):
         match view:
             case LiveQuizView.QUIZ_BOARD:
                 answered = self.answered_questions
-                for category in self.quiz.categories.all():
+                for category in self.categories.all():
                     cat_key = category.name
                     view_data[cat_key] = []
 
@@ -222,17 +236,17 @@ class LiveQuizModel(models.Model):
                                 'value': question.value
                             })
             case LiveQuizView.QUESTION:
-                question = QuestionModel.objects.get(pk=question)
+                question = LiveQuizQuestion.objects.get(pk=question)
                 view_data = {
                     'id': question.pk,
-                    'text': question.question_text
+                    'text': question.question
                 }
             case LiveQuizView.ANSWER:
-                question = QuestionModel.objects.get(pk=question)
+                question = LiveQuizQuestion.objects.get(pk=question)
                 view_data = {
                     'id': question.pk,
-                    'text': question.question_text,
-                    'answer': question.solution_text
+                    'text': question.question,
+                    'answer': question.answer
                 }
             case _:
                 raise Exception(f'Not a valid view from LiveQuizView: {view}')
@@ -243,3 +257,36 @@ class LiveQuizModel(models.Model):
         self.save()
 
         return self.last_view_command
+    
+
+@receiver(pre_delete, sender=LiveQuizModel)
+def on_delete_livequiz(**kwargs):
+    '''Sends a signal to the quizzes channel group that this quiz has been deleted.'''
+    async_to_sync(get_channel_layer().group_send)(
+        kwargs['instance'].group_name,
+        {
+            'type': 'quiz.terminated'
+        }
+    )
+
+
+class LiveQuizCategory(models.Model):
+    '''A category of questions.'''
+    name = models.CharField(max_length=128)
+    quiz = models.ForeignKey(
+        to=LiveQuizModel,
+        on_delete=models.CASCADE,
+        related_name='categories'
+    )
+
+
+class LiveQuizQuestion(models.Model):
+    '''A simple question/answer with a value.'''
+    value = models.IntegerField(default=100)
+    question = models.TextField(max_length=512)
+    answer = models.TextField(max_length=512)
+    category = models.ForeignKey(
+        to=LiveQuizCategory,
+        on_delete=models.CASCADE,
+        related_name='questions'
+    )

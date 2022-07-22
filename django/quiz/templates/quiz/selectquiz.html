@@ -4,24 +4,29 @@
 
 <p>Select an available quiz below.</p>
 
-{% for quiz in self_quizzes %}
+{% for quiz in available_quizzes %}
 	<p>
 		{{ quiz.name }}
-		[<a href="{% url 'quiz:start' quiz.id %}">
-			{% if request.session.quiz == quiz.id %}
-				Restart
-			{% else %}
-				Start
-			{% endif %}
-		</a>]
+
+		{% if quiz in self_quizzes %}
+			[<a href="{% url 'quiz:start' quiz.id %}">
+				{% if request.session.quiz == quiz.id %}
+					Restart Self Quiz
+				{% else %}
+					Start Self Quiz
+				{% endif %}
+			</a>]
+		{% endif %}
+		{% if quiz in host_quizzes %}
+			[<form action="{% url 'quiz:launchlive' %}" method="post"><input type="hidden" name="quiz_id" value="{{ quiz.id }}"><input type="submit" value="Start Live Quiz"></form>]
+		{% endif %}
 	</p>
 {% empty %}
 	No quizzes are available.
 {% endfor %}
 
 {% if user.is_authenticated %}
-	<a href="{% url 'livequiz:list' %}">Host a quiz.</a>
+	<a href="{% url 'livequiz:list' %}">Manage quizzes you are hosting.</a>
 {% endif %}
 
-<a href="{% url 'livequiz:join' %}">Join a quiz.</a>
 {% endblock %}

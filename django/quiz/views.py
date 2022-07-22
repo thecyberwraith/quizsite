@@ -6,6 +6,7 @@ import django.views.generic as generic
 from django.urls import reverse
 
 from .models import QuizModel, QuestionModel
+from livequiz.models import LiveQuizModel, QuizData
 
 
 class QuizSelectPage(generic.TemplateView):
@@ -17,7 +18,9 @@ class QuizSelectPage(generic.TemplateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
 
-        context['self_quizzes'] = QuizModel.get_self_quizzes()
+        context['self_quizzes'] = list(QuizModel.get_self_quizzes())
+        context['host_quizzes'] = list(QuizModel.get_hosted_quizzes(self.request.user))
+        context['available_quizzes'] = sorted(set(context['self_quizzes'] + context['host_quizzes']))
 
         return context
 
@@ -70,3 +73,36 @@ class QuizAnswerQuestionRedirect(generic.View):
         return redirect(
             reverse('quiz:quiz', kwargs={'pk': question.category.quiz.id})
         )
+
+
+class LaunchLiveQuizRedirect(generic.View):
+    '''Performed setup for an authenticated user to launch a game.'''
+
+    def post(self, request):
+        quiz_id = request.POST['quiz_id']
+        fail_redirect = redirect(reverse('quiz:select'))
+
+        if not request.user.is_authenticated:
+            return fail_redirect
+
+        try:
+            quiz = QuizModel.objects.get(id=quiz_id)
+        except QuizModel.DoesNotExist:
+            return fail_redirect
+
+        if quiz.owner != request.user:
+            return fail_redirect
+
+        livequiz = LiveQuizModel.objects.create_for_quiz(
+            quiz.owner, to_livequiz_data(quiz))
+
+        return redirect(reverse('livequiz:host', kwargs={'quiz_code': livequiz.code}))
+
+
+def to_livequiz_data(quiz: QuizModel) -> QuizData:
+    '''Converts a quiz to the data structure for a live quiz.'''
+    return QuizData(
+        name=quiz.name,
+        categories={cat.name: [(q.value, q.question_text, q.solution_text)
+                               for q in cat.questions.all()] for cat in quiz.categories.all()}
+    )

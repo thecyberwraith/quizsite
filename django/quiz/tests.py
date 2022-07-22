@@ -3,6 +3,111 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .models import QuizModel, CategoryModel, QuestionModel
+from livequiz.models import LiveQuizModel, QuizData
+
+class TestLaunchLiveQuizRedirect(TestCase):
+    FAIL_URL = reverse('quiz:select')
+
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.user = User.objects.create_user(
+            username='launch',
+            password='away'
+        )
+        cls.quiz = QuizModel.objects.create(name='Test Quiz', owner=cls.user)
+        cat = cls.quiz.categories.create(name='A')
+        cat.questions.create(value=100, question_text='Qho', solution_text='Tho')
+
+    def setUp(self) -> None:
+        self.client.force_login(self.user)
+
+    def get_response(self, quiz_id=1):
+        return self.client.post(
+            reverse('quiz:launchlive'),
+            data={'quiz_id': quiz_id},
+            follow=True
+        )
+
+    def test_redirects_to_list_if_not_logged_in(self):
+        self.client.logout()
+
+        response = self.get_response()
+
+        self.assertRedirects(
+            response,
+            self.FAIL_URL
+        )
+
+    def test_redirects_to_list_if_quiz_does_not_exist(self):
+        response = self.get_response(self.quiz.id+1)
+
+        self.assertRedirects(
+            response,
+            self.FAIL_URL
+        )
+
+    def test_redirects_to_list_if_quiz_is_not_owned(self):
+        self.quiz.owner = None
+        self.quiz.save()
+        response = self.get_response(self.quiz.id)
+
+        self.assertRedirects(
+            response,
+            self.FAIL_URL
+        )
+
+    def test_redirects_and_live_quiz_created_if_owned(self):
+        self.assertEqual(LiveQuizModel.objects.all().count(), 0)
+        response = self.get_response(self.quiz.id)
+
+        self.assertEqual(LiveQuizModel.objects.all().count(), 1)
+
+        livequiz = LiveQuizModel.objects.all().first()
+
+        self.assertRedirects(
+            response,
+            reverse('livequiz:host', kwargs={'quiz_code': livequiz.code})
+        )
+
+
+
+class TestHostableQuizList(TestCase):
+    HOST_SECTION_TEXT = 'Start Live Quiz'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username='bob', password='nob')
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def get_response(self):
+        return self.client.get(reverse('quiz:select'))
+
+    def test_no_hosted_quizzes_shown_if_not_owned(self):
+        a = User.objects.create_user(username='sue', password='what')
+        QuizModel.objects.create(
+            name='Not my quiz.',
+            host_option=True,
+            owner=a
+        )
+
+        response = self.get_response()
+
+        self.assertNotContains(response, self.HOST_SECTION_TEXT)
+        self.assertListEqual(list(response.context['host_quizzes']), [])
+
+    def test_hosted_quiz_shown_if_owned(self):
+        quiz = QuizModel.objects.create(
+            name='Host me baby.',
+            host_option=True,
+            owner=self.user
+        )
+        response = self.get_response()
+        self.assertListEqual(list(response.context['host_quizzes']), [quiz])
+        self.assertContains(response, self.HOST_SECTION_TEXT)
+        self.assertContains(response, quiz.name)
+
 
 
 class TestSelfQuizListPage(TestCase):

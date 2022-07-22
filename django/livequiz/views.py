@@ -20,29 +20,6 @@ class ListHostableQuizzesPage(TemplateView):
         return context
 
 
-class LaunchRedirect(View):
-    '''Performed setup for an authenticated user to launch a game.'''
-
-    def post(self, request):
-        quiz_id = request.POST['quiz_id']
-        fail_redirect = redirect(reverse('livequiz:list'))
-
-        if not request.user.is_authenticated:
-            return fail_redirect
-
-        try:
-            quiz = QuizModel.objects.get(id=quiz_id)
-        except QuizModel.DoesNotExist:
-            return fail_redirect
-
-        if quiz.owner != request.user:
-            return fail_redirect
-
-        livequiz = LiveQuizModel.objects.create_for_quiz(quiz_id)
-
-        return redirect(reverse('livequiz:host', kwargs={'quiz_code': livequiz.code}))
-
-
 class DeleteRedirect(View):
     '''Remove a particular live quiz.'''
 
@@ -54,8 +31,8 @@ class DeleteRedirect(View):
 
         try:
             live_quiz = LiveQuizModel.objects.get(code=livequiz_code)
-            if live_quiz.quiz.owner == request.user:
-                LiveQuizModel.objects.delete(quiz_code=livequiz_code)
+            if live_quiz.host == request.user:
+                live_quiz.delete()
         except LiveQuizModel.DoesNotExist:
             pass
 

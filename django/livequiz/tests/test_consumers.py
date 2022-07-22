@@ -11,7 +11,7 @@ from django.test import TestCase
 
 from quiz.models import QuizModel
 from livequiz.consumers import LiveQuizConsumer, LiveQuizHostConsumer
-from livequiz.models import LiveQuizModel
+from livequiz.models import LiveQuizModel, QuizData
 
 
 class LiveQuizConsumerTestCase(TestCase):
@@ -23,8 +23,10 @@ class LiveQuizConsumerTestCase(TestCase):
 
     @database_sync_to_async
     def add_quiz_info(self, owner=None):
-        quiz = QuizModel.objects.create(name='A Quiz', owner=owner)
-        return LiveQuizModel.objects.create_for_quiz(quiz.id).code
+        if owner is None:
+            owner = User.objects.create_user(username='troll', password='potato')
+        
+        return LiveQuizModel.objects.create_for_quiz(owner, QuizData(name='A Quiz', categories={})).code
 
     async def connect_with_code(self, code='ABCDE'):
         self.communicator = WebsocketCommunicator(
@@ -84,7 +86,7 @@ class TestGenericLiveQuizConsumer(LiveQuizConsumerTestCase):
         await self.communicator.receive_json_from()  # Update buzz event
 
         await database_sync_to_async(
-            lambda code: LiveQuizModel.objects.delete(quiz_code=code)
+            lambda code: LiveQuizModel.objects.filter(code=code).delete()
         )(quiz_code)
 
         await self.assertMessageType('terminated')
