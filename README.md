@@ -2,16 +2,28 @@
 
 This is intended to be a little site that teachers can use to present Jeopardy style quizzes to their students. But, eventually, it will be fully depoloyable on your own domain!
 
-## Development Setup
+## Environment Setup
 
-This version of QuizSite is build on Python3.10 with the Django library. We are integrated with VSCode. To get this running, you should:
+The preferred method for setting up the project is using VSCode with the VSCode Remote Containers plugin, which assumes you have Docker installed on your machine. Otherwise, you can manually handle the python installation with packages.
+
+### Docker Method
 
 1) Clone this repository
-2) In VSCode, open using a remote container (needs the VSCode Remote Containers plugin)
+2) In VSCode, open using a remote container (needs the VSCode Remote Containers plugin and Docker installed)
 3) Run the task `Setup Database`. This prompts you to create a super user AND WILL DELETE ANY PREVIOUS DATABASE.
 4) Boot up the development server by running task `Run Server`
 
-Note that, out of the box, the Docker commands will not work in the development container. However, if you want to just run this on your own laptop, this should work well enough.
+### Manual Method
+Assuming Python3.10 is installed on your system, do the following. Use of a virtual environment is optional.
+
+1) Clone this repository
+2) Run `pip install -r requirements.txt`
+3) Optionally, run `pip install -r requirements-dev.txt` if you want tests to pass.
+4) In the `src` directory, run the following commands. These commands should only need to be run once, or after a major update to the project.
+    1) `python manage.py createsuperuser`
+    2) `python manage.py makemigrations`
+    3) `python manage.py migrate`
+5) Finally, to run/rerun the server, run `python manage.py runserver` from the `src` directory.
 
 ## Using Quizzes
 
@@ -23,16 +35,17 @@ First, you need a superuser in the Django app framework. If you haven't already,
 2) Create all the Category Models associated to your quiz.
 3) Create Question Models that each associates to a Category Model.
 
-### Using an Open Quiz
 
-By swapping out the `db.sqlite3` file, you can instantly use quizzes that others have created. In the `sample_quizzes` folder, find all the created quizzes. For practice, try loading the `Example` quiz set.
+### Using a Quiz
+
+The proect homepage should list quizzes that uses can launch. The creator of a quiz can also host their quizzes interactively. This assumes you are logged in as the creator. As of this writing, logins can only happen through the admin interface above.
 
 ## Deploying with Docker
 
-If you have Docker installed, then you can depoly this project with it. First, you need the following configurations set.
+If you have Docker installed, then you can deploy this project with it. First, you need the following configurations set.
 
 * In the root directory, create a file name `.env` which holds the following variables:
-    * SERVER_HOST_NAME - The hostname that the service should respond to (should match your certificates)
+    * SERVER_HOST_NAME - The hostname that the service should respond to (should match your certificates) including the protocol (http:// or https://)
     * DEBUG - Whether to use debug services in Django and set log level to DEBUG.
     * SECRET - The secret key to use for encryption for Django.
     * DATABASE_FILE - Since I use a simple sqlite3 database, persist data by mounting the file from your system into the application! If you don't have the file already, one is generated in the image. NOTE - you may need to manually make migrations on externally persisted database files.
