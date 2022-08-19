@@ -40,20 +40,28 @@ First, you need a superuser in the Django app framework. If you haven't already,
 
 The proect homepage should list quizzes that uses can launch. The creator of a quiz can also host their quizzes interactively. This assumes you are logged in as the creator. As of this writing, logins can only happen through the admin interface above.
 
+## Server Configuration
+
+The server allows a few customizations that can be changed by an environment variable. If using Docker, you may put your values in a `.env` file or manually add a `-f other_compose_file.yml` that overrides your customizations.
+
+* SERVER_HOST_NAME - The hostname that the service should respond to (should match your certificates) including the protocol (`http://` or `https://`). The default is `http://localhost`.
+* DEBUG - Whether to use debug services in Django and set log level to DEBUG. Default is `True`.
+* SECRET - The secret key to use for encryption for Django. Default is `notasecret`
+
 ## Deploying with Docker
 
-If you have Docker installed, then you can deploy this project with it. First, you need the following configurations set.
+This project provides a simple deployment using multiple docker compose files. For example, by calling `docker compose -f docker-compose.yml -f docker-compose-qa.yml`, you are configuring the quality assurance deployment which uses a production environment and automatically deploys an SSL enabled Nginx server to handle static files and default routing, assuming you provide a viable certificate.
 
-* In the root directory, create a file name `.env` which holds the following variables:
-    * SERVER_HOST_NAME - The hostname that the service should respond to (should match your certificates) including the protocol (http:// or https://)
-    * DEBUG - Whether to use debug services in Django and set log level to DEBUG.
-    * SECRET - The secret key to use for encryption for Django.
-    * DATABASE_FILE - Since I use a simple sqlite3 database, persist data by mounting the file from your system into the application! If you don't have the file already, one is generated in the image. NOTE - you may need to manually make migrations on externally persisted database files.
-    * CERT_FILE - The https certificate file for the internal nginx instance.
-    * CERT_KEY - The private key file for the https certiciate.
+* CERT_FILE - The https certificate file for the internal nginx instance.
+* CERT_KEY - The private key file for the https certiciate.
 
-Afterwards, run `docker compose build --pull && docker compose up` to boot up the service. It defaults to port `8080` on the machine. If you want to utilize this service with a self signed certificate, run the command 
+To generate a self-signed certificate for local SSL, run the command below.
 
 `openssl req -x509 -nodes -out ./certs/fullchain.pem -keyout ./certs/privkey.pem`
 
-which will generate self signed certificates. You must access with https: `https://localhost:8080` for example.
+In short, after specifying those options, the following commands will get a minimally viable production server running.
+
+* `docker compose -f docker-compose.yml -f docker-compose-qa.yml build`
+* `docker compose -f docker-compose.yml -f docker-compose-qa.yml up -d`
+
+Then visit the `SERVER_HOST_NAME` you configured and it should all work! You can customize the variables (such as choosing a real secret and setting `DEBUG` to false) as you see fit.

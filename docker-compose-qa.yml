@@ -5,14 +5,14 @@ services:
     build:
       target: prod
     environment:
-      - SERVER_HOST_NAME=http://localhost
+      - SERVER_HOST_NAME=$SERVER_HOST_NAME
   nginx:
     build:
       dockerfile: Dockerfile
       target: nginx
     volumes:
-      - $CERT_FILE:/etc/nginx/certs/fullchain.pem
-      - $CERT_KEY:/etc/nginx/certs/privkey.pem
-      - ./nginxconf/https.conf:/etc/nginx/templates/default.conf.template
+      - $CERT_FILE:/etc/nginx/certs/fullchain.pem:ro
+      - $CERT_KEY:/etc/nginx/certs/privkey.pem:ro
+      - ./nginxconf/https.conf:/etc/nginx/templates/default.conf.template:ro
     ports:
-      - 80:80
+      - 443:443
