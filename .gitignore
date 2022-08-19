@@ -3,3 +3,4 @@ __pycache__/
 migrations
 certs/
 .env
+docker-compose-prod.yml

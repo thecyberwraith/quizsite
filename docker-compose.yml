@@ -3,24 +3,12 @@ version: "3.9"
 services:
   server:
     build:
-      context: ./django
-      dockerfile: django.dockerfile
+      context: ./
+      dockerfile: Dockerfile
+      target: prod
     environment:
       - SECRET=$SECRET
       - DEBUG=$DEBUG
       - SERVER_HOST_NAME=$SERVER_HOST_NAME
-    volumes:
-      - $DATABASE_FILE:/usr/app/src/db.sqlite3
   redis:
     image: redis
-  nginx:
-    build:
-      context: .
-      dockerfile: dockerfiles/nginx.dockerfile
-    volumes:
-      - $CERT_FILE:/etc/nginx/certs/fullchain.pem
-      - $CERT_KEY:/etc/nginx/certs/privkey.pem
-    environment:
-      - SERVER_HOST_NAME=$SERVER_HOST_NAME
-    ports:
-      - 8080:443

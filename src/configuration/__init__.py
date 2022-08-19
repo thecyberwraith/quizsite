@@ -12,12 +12,13 @@ LOG = Logger(__name__)
 
 def get_hostname() -> str:
     '''Attempt to read the SERVER_HOST_NAME environment variable.'''
+
     try:
         return environ['SERVER_HOST_NAME']
     except KeyError:
         LOG.warning(
             "No 'SERVER_HOST_NAME' environment variable present. Defaulting to localhost.")
-        return 'localhost'
+        return 'http://localhost'
 
 
 def get_debug() -> bool:
