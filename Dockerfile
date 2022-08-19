@@ -2,18 +2,20 @@ FROM python:3.10 AS base
 
 COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt && rm requirements.txt
-
+RUN useradd -m djangoapp
 
 FROM base AS dev
 
 COPY requirements-dev.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt && rm requirements.txt
 
+USER djangoapp:djangoapp
 WORKDIR /workspace
 
 
 FROM base AS projectloaded
 
+USER djangoapp:djangoapp
 WORKDIR /usr/app/src
 COPY ./src .
 
